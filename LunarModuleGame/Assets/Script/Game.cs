@@ -11,6 +11,8 @@ enum eStatus{
 public class Game : MonoBehaviour {
 	private eStatus m_Status;
 
+	private GameObject mySpaceShip;
+
 	public Text gameoverText;
 	
 	// Use this for initialization
@@ -51,12 +53,15 @@ public class Game : MonoBehaviour {
 		gameoverText = GameObject.Find ("Canvas/TextGameover").GetComponent<Text> ();
 		gameoverText.text = "";
 
+		// 宇宙船の初期位置設定
+		mySpaceShip = GameObject.Find("SpaceShip");
+		mySpaceShip.transform.Translate (1,1,0);
 	}
 
 	// Game状態の開始関数
 	void StartGameover(eStatus PrevStatus){
 		// 代わった時に1回しかやらないことをする
-		gameoverText.text = "GAMEOVER\npush space";
+		gameoverText.text = "GAMEOVER push space";
 	}
 
 	// Play状態の更新関数
