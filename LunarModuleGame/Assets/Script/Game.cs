@@ -14,13 +14,13 @@ public class Game : MonoBehaviour {
 	private GameObject mySpaceShip;
 
 	public Text gameoverText;
-	
+
 	// Use this for initialization
 	void Start () {
 		m_Status = eStatus.ePlay;
 		Transit (m_Status);
 	}
-	
+
 	// Update is called once per frame
 	void Update () {
 		switch (m_Status) {
@@ -55,7 +55,7 @@ public class Game : MonoBehaviour {
 
 		// 宇宙船の初期位置設定
 		mySpaceShip = GameObject.Find("SpaceShip");
-		mySpaceShip.transform.Translate (1,1,0);
+		mySpaceShip.transform.Translate (1,3,0);
 	}
 
 	// Game状態の開始関数
@@ -71,7 +71,6 @@ public class Game : MonoBehaviour {
 		{
 			Transit (eStatus.eGameOver);
 		}
-
 	}
 
 	// Game状態の更新関数
@@ -82,7 +81,4 @@ public class Game : MonoBehaviour {
 			Application.LoadLevel("Title");
 		}
 	}
-
-
-
 }
