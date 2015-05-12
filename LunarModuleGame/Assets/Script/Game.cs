@@ -3,17 +3,67 @@ using System.Collections;
 
 using UnityEngine.UI;
 
+// ステータス
 enum eStatus{
 	ePlay,
 	eGameOver,
 };
 
+class SpaceShip{
+	protected Vector2 position;			// 宇宙船の座標
+	protected GameObject mySpaceShip;
+	protected float rotationAngle;		// 宇宙船の回転角度
+
+	// コンストラクタ
+	public SpaceShip(){
+		position.x = 0;
+		position.y = 0;
+		rotationAngle = 0;
+
+		mySpaceShip = GameObject.Find("SpaceShip");
+	}
+
+	public void Initialize(){
+		position.x = -2.0f;
+		position.y = 2.0f;
+		mySpaceShip.transform.localPosition = new Vector3(position.x,position.y,0);
+		rotationAngle = 0.0f;
+		mySpaceShip.transform.rotation = Quaternion.AngleAxis (0,Vector3.forward);
+	}
+
+	// 宇宙船の位置をセットする関数
+	public void SetPosition(float x, float y){
+		position.x = x;
+		position.y = y;
+
+		mySpaceShip.transform.localPosition = new Vector3(position.x,position.y,0);
+	}
+
+	// 宇宙船の位置を取得する関数
+	public Vector2 GetPosition(){
+		return position;
+	}
+
+	// 宇宙船の回転を行う関数
+	public void Rotation(float rotationSpeed){
+		rotationAngle = rotationAngle + rotationSpeed;
+		mySpaceShip.transform.rotation = Quaternion.AngleAxis (rotationAngle%360,Vector3.forward);
+	}
+
+	// テスト関数
+	public void Test(){
+		Debug.Log (mySpaceShip.transform.up);
+	}
+}
+
 public class Game : MonoBehaviour {
+	// 定数
+	public static readonly float ROTATION_SPEED = 2.0f;		// 回転速度
+	
 	private eStatus m_Status;
-
-	private GameObject mySpaceShip;
-
 	public Text gameoverText;
+
+	SpaceShip mySpaceShip;
 
 	// Use this for initialization
 	void Start () {
@@ -54,8 +104,9 @@ public class Game : MonoBehaviour {
 		gameoverText.text = "";
 
 		// 宇宙船の初期位置設定
-		mySpaceShip = GameObject.Find("SpaceShip");
-		mySpaceShip.transform.Translate (1,3,0);
+		mySpaceShip = new SpaceShip ();
+		mySpaceShip.Initialize();
+
 	}
 
 	// Game状態の開始関数
@@ -71,6 +122,27 @@ public class Game : MonoBehaviour {
 		{
 			Transit (eStatus.eGameOver);
 		}
+
+		// leftShiftでブロックを最初の位置に戻す（仮）
+		if (Input.GetKeyDown (KeyCode.LeftShift)) {
+			mySpaceShip.Initialize();
+		}
+
+		// RightArrowで宇宙船を右回転させる
+		if (Input.GetKey(KeyCode.RightArrow)) {
+			mySpaceShip.Rotation(-ROTATION_SPEED);
+		}
+
+		// LeftArrowで宇宙船を左回転させる
+		if (Input.GetKey(KeyCode.LeftArrow)) {
+			mySpaceShip.Rotation(ROTATION_SPEED);
+		}
+
+		// Aでテスト
+		if (Input.GetKey(KeyCode.A)) {
+			mySpaceShip.Test ();
+		}
+
 	}
 
 	// Game状態の更新関数
@@ -82,3 +154,5 @@ public class Game : MonoBehaviour {
 		}
 	}
 }
+
+
