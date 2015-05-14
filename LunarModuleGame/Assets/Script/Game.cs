@@ -13,11 +13,14 @@ class SpaceShip{
 	// 定数
 	public static readonly float MAX_XSPEED = 0.03f;			// 左右移動の最高速度
 	public static readonly float MAX_VELOCITYSPEED = -1.0f;		// 落下の最高速度
+	public static readonly int MAX_FUEL = 500;					// 満タン時の燃料
 
 	protected Vector2 position;			// 宇宙船の座標
 	protected GameObject mySpaceShip;
 	protected float rotationAngle;		// 宇宙船の回転角度
 	protected float moveX;
+
+	protected int fuelRemaining;		// 宇宙船の燃料
 	
 	// コンストラクタ
 	public SpaceShip(){
@@ -25,6 +28,7 @@ class SpaceShip{
 		position.y = 0;
 		rotationAngle = 0;
 		moveX = 0.0f;
+		fuelRemaining = MAX_FUEL;
 
 		// コンポーネントの取得
 		mySpaceShip = GameObject.Find("spaceship");
@@ -34,9 +38,11 @@ class SpaceShip{
 	}
 	
 	public void Initialize(){
+		// 初期位置に宇宙船をセット
 		position.x = -2.0f;
 		position.y = 2.0f;
 		mySpaceShip.transform.localPosition = new Vector3(position.x,position.y,0);
+
 		rotationAngle = 0.0f;
 		mySpaceShip.transform.rotation = Quaternion.AngleAxis (0,Vector3.forward);
 		moveX = 0.0f;
@@ -87,6 +93,9 @@ class SpaceShip{
 		moveX = pos.x - mySpaceShip.transform.localPosition.x;
 
 		SetPosition (pos.x,pos.y);
+
+		// 燃料を消費する
+		UseFuel ();
 	}
 
 	// テスト関数
@@ -151,6 +160,23 @@ class SpaceShip{
 
 		return true;
 	}
+
+	// 残りの燃料を取得する関数
+	public int GetFuelRemaining(){
+		return fuelRemaining;
+	}
+
+	// 燃料を消費する関数
+	public void UseFuel(){
+		fuelRemaining -= 1;
+	}
+
+	// 残りの燃料をパーセントで返す関数
+	public int GetPercentFuelRemaining(){
+		float percent;
+		percent = (float)fuelRemaining / (float)MAX_FUEL;
+		return  (int)(percent * 100);
+	}
 }
 
 public class Game : MonoBehaviour {
@@ -159,6 +185,7 @@ public class Game : MonoBehaviour {
 	
 	private eStatus m_Status;
 	public Text gameoverText;
+	public Text fuelRemainingText;
 
 	SpaceShip mySpaceShip;
 	
@@ -199,11 +226,14 @@ public class Game : MonoBehaviour {
 		// 代わった時に1回しかやらないことをする
 		gameoverText = GameObject.Find ("Canvas/TextGameover").GetComponent<Text> ();
 		gameoverText.text = "";
-		
+
 		// 宇宙船の初期位置設定
 		mySpaceShip = new SpaceShip ();
 		mySpaceShip.Initialize();
-		
+
+		fuelRemainingText = GameObject.Find ("Canvas/TextFuelRemaining").GetComponent<Text> ();
+		fuelRemainingText.text = "残りの燃料:"+mySpaceShip.GetPercentFuelRemaining();
+
 	}
 
 	// Game状態の開始関数
@@ -236,13 +266,13 @@ public class Game : MonoBehaviour {
 		}
 
 		// ロケット噴射時に重力を0に設定する
-		if (Input.GetKeyDown (KeyCode.A)) {
+		if (Input.GetKeyDown (KeyCode.A) && mySpaceShip.GetFuelRemaining() > 0) {
 			Physics2D.gravity=new Vector3(0.0f, 0.0f, 0.0f);
 			mySpaceShip.Test();
 		}
 		
 		// Aで噴射
-		if (Input.GetKey (KeyCode.A)) {
+		if (Input.GetKey (KeyCode.A) && mySpaceShip.GetFuelRemaining() > 0) {
 			mySpaceShip.Jet ();
 		}
 		else {
@@ -252,12 +282,15 @@ public class Game : MonoBehaviour {
 		}
 
 		// 重力と落下速度を調節する
-		if (Input.GetKeyUp (KeyCode.A)) {
+		if (Input.GetKeyUp (KeyCode.A) && mySpaceShip.GetFuelRemaining() > 0) {
 			Physics2D.gravity=new Vector3(0.0f, -0.3f, 0.0f);
 			//mySpaceShip.Test();
 			mySpaceShip.SetVelocity(0.0f);
 		}
 		mySpaceShip.Landing();
+
+		// 残りの燃料の更新
+		fuelRemainingText.text = "残りの燃料:"+mySpaceShip.GetPercentFuelRemaining()+"%";
 	}
 	
 	// Game状態の更新関数
@@ -267,6 +300,11 @@ public class Game : MonoBehaviour {
 		{
 			Application.LoadLevel("Title");
 		}
+	}
+
+	// スコアの計算
+	void ComputeScore(){
+
 	}
 
 	// 壁や床にぶつかった時に呼び出される
