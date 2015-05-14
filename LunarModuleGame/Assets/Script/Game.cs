@@ -21,6 +21,8 @@ class SpaceShip{
 	protected float moveX;
 
 	protected int fuelRemaining;		// 宇宙船の燃料
+
+	protected Rigidbody2D rigidbody2D;	// 落下速度
 	
 	// コンストラクタ
 	public SpaceShip(){
@@ -34,7 +36,9 @@ class SpaceShip{
 		mySpaceShip = GameObject.Find("spaceship");
 
 		Physics2D.gravity=new Vector3(0.0f, -0.3f, 0.0f);
-		SetVelocity(0.0f);
+
+		rigidbody2D = mySpaceShip.GetComponent<Rigidbody2D> ();
+		SetVelocitySpeed (new Vector3 (0.0f, 0.0f, 0.0f));
 	}
 	
 	public void Initialize(){
@@ -116,25 +120,26 @@ class SpaceShip{
 		
 		SetPosition (pos.x,pos.y);
 	}
-
+	
+	// 落下速度を取得する関数
+	public Vector3 GetVelocitySpeed(){
+		rigidbody2D = mySpaceShip.GetComponent<Rigidbody2D> ();
+		return rigidbody2D.velocity;
+	}
+	
 	// 落下速度を設定する関数
-	public void SetVelocity(float velocity){
-		Rigidbody2D rigidbody2D = mySpaceShip.GetComponent<Rigidbody2D> ();
-		Vector3 nowSpeed = rigidbody2D.velocity;
-		nowSpeed.y = velocity;
-
-		rigidbody2D.velocity = nowSpeed;
+	public void SetVelocitySpeed(Vector3 velocitySpeed){
+		rigidbody2D.velocity = velocitySpeed;
 	}
 
 	// 落下速度が上限を超えないようにする関数
 	public void SetChangeVelocity(){
 		// 落下速度に上限を設ける
-		Rigidbody2D rigidbody2D = mySpaceShip.GetComponent<Rigidbody2D> ();
-		Vector3 nowSpeed = rigidbody2D.velocity;
+		Vector3 nowSpeed = GetVelocitySpeed();
 		
 		if (nowSpeed.y < MAX_VELOCITYSPEED) {
 			nowSpeed.y = MAX_VELOCITYSPEED;
-			rigidbody2D.velocity = nowSpeed;
+			SetVelocitySpeed(nowSpeed);
 		}
 	}
 
@@ -151,8 +156,7 @@ class SpaceShip{
 		}
 
 		// 現在の落下速度を取得
-		Rigidbody2D rigidbody2D = mySpaceShip.GetComponent<Rigidbody2D> ();
-		Vector3 nowSpeed = rigidbody2D.velocity;
+		Vector3 nowSpeed = GetVelocitySpeed();
 		// 着陸の落下速度が最高落下速度の2分の1よりも早い場合falseを返す
 		if (nowSpeed.y <= (MAX_VELOCITYSPEED/2)){
 			return false;
@@ -184,7 +188,7 @@ public class Game : MonoBehaviour {
 	public static readonly float ROTATION_SPEED = 2.0f;		// 回転速度
 	
 	private eStatus m_Status;
-	public Text gameoverText;
+	public Text gameEndText;
 	public Text fuelRemainingText;
 
 	SpaceShip mySpaceShip;
@@ -224,8 +228,8 @@ public class Game : MonoBehaviour {
 	// play状態の開始関数
 	void StartPlay(eStatus PrevStatus){
 		// 代わった時に1回しかやらないことをする
-		gameoverText = GameObject.Find ("Canvas/TextGameover").GetComponent<Text> ();
-		gameoverText.text = "";
+		gameEndText = GameObject.Find ("Canvas/TextGameEnd").GetComponent<Text> ();
+		gameEndText.text = "";
 
 		// 宇宙船の初期位置設定
 		mySpaceShip = new SpaceShip ();
@@ -285,7 +289,7 @@ public class Game : MonoBehaviour {
 		if (Input.GetKeyUp (KeyCode.A) && mySpaceShip.GetFuelRemaining() > 0) {
 			Physics2D.gravity=new Vector3(0.0f, -0.3f, 0.0f);
 			//mySpaceShip.Test();
-			mySpaceShip.SetVelocity(0.0f);
+			mySpaceShip.SetVelocitySpeed (new Vector3 (0.0f, 0.0f, 0.0f));
 		}
 		mySpaceShip.Landing();
 
@@ -303,8 +307,16 @@ public class Game : MonoBehaviour {
 	}
 
 	// スコアの計算
-	void ComputeScore(){
+	int ComputeScore(){
+		// 着陸速度が小さいほど高得点
+		float score = 0.5f + mySpaceShip.GetVelocitySpeed ().y;
+		score = score * 100;
 
+		// 残りの燃料に伴ってボーナス点を加算
+		float percent = (float)mySpaceShip.GetPercentFuelRemaining ();
+		score = score * percent;
+
+		return (int)score;
 	}
 
 	// 壁や床にぶつかった時に呼び出される
@@ -312,23 +324,24 @@ public class Game : MonoBehaviour {
 
 		// ステージ(壁や地面)にぶつかった場合
 		if (c.gameObject.tag == "Stage") {
-			gameoverText.text = "GAMEOVER push space";
+			gameEndText.text = "GAMEOVER push space";
 		}
 
 		// 着地ポイントに着地した場合、着地成功かの判定を行う
 		if(c.gameObject.tag == "LandPoint") {
 			// 着地が成功した場合
 			if(mySpaceShip.Landing()){
-				gameoverText.text = "GameComplete\npush space";
+				// スコアの表示もここで行う
+				gameEndText.text = "GameComplete\nscore:"+ComputeScore()+"\npush space";
 			}
 			else{
-				gameoverText.text = "GAMEOVER push space";
+				gameEndText.text = "GAMEOVER push space";
 			}
 		}
 
 		// 重力と落下速度を調節する
 		Physics2D.gravity=new Vector3(0.0f, 0.0f, 0.0f);
-		mySpaceShip.SetVelocity(0.0f);
+		mySpaceShip.SetVelocitySpeed (new Vector3 (0.0f, 0.0f, 0.0f));
 
 		Transit (eStatus.eGameOver);
 	}
