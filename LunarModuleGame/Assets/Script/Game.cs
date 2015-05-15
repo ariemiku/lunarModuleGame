@@ -11,18 +11,22 @@ enum eStatus{
 };
 
 class Fire{
-	public static readonly float DIFFERENCE_POSX = 0.05f;	// 宇宙船のX座標との差
-	public static readonly float DIFFERENCE_POSY = -0.31f;	// 宇宙船のY座標との差
+	public static readonly float DISTANCE = 0.3f; // 宇宙船との距離
 
 	protected GameObject fire;
-	protected Vector2 position;
-	protected float rotationAngle;		// 回転角度
+	protected Vector2 position;			// 炎の座標
+	protected float rotationAngle;		// 炎の回転角度
 
 	// コンストラクタ
 	public Fire(){
 		fire = GameObject.Find ("fire");
 		position = new Vector2 (0.0f, 0.0f);
 		rotationAngle = 0.0f;
+	}
+
+	// ゲームオブジェクトを取得する関数
+	public GameObject GetGameObject(){
+		return fire;
 	}
 
 	// 宇宙船の裏側に位置をセットする関数
@@ -44,18 +48,13 @@ class Fire{
 		fire.transform.rotation = Quaternion.AngleAxis (rotationAngle%360,Vector3.forward);
 	}
 
-	// テストを行う関数
-	public void Test(){
-
-	}
-
 	// 炎の位置を宇宙船の下に設定する関数
 	public void SetFireUnderSpaceShip(GameObject spaceShip,Vector2 centerPos){
 		Vector3 pos;
 		Vector3 centerPosition = new Vector3 (centerPos.x, centerPos.y, 0.0f);
 		
 		// 向いている方向へ移動させる
-		pos = (spaceShip.transform.TransformDirection (Vector3.down) * 0.3f)+centerPosition;
+		pos = (spaceShip.transform.TransformDirection (Vector3.down) * DISTANCE)+centerPosition;
 		
 		pos.z = 0.0f;
 		
@@ -106,7 +105,7 @@ class SpaceShip{
 		moveX = 0.0f;
 	}
 
-	// ゲームオブジェクトを取得する
+	// ゲームオブジェクトを取得する関数
 	public GameObject GetGameObject(){
 		return mySpaceShip;
 	}
@@ -155,10 +154,6 @@ class SpaceShip{
 
 		// 燃料を消費する
 		UseFuel ();
-	}
-
-	// テスト関数
-	public void Test(){
 	}
 
 	// 慣性の法則に従って動き続けるx座標の処理
@@ -262,6 +257,8 @@ public class Game : MonoBehaviour {
 	SpaceShip mySpaceShip;
 	Fire fire;
 
+	GameObject explode;
+
 	bool checkPoint;
 	
 	// Use this for initialization
@@ -333,6 +330,8 @@ public class Game : MonoBehaviour {
 
 		fire = new Fire ();
 		fire.BackSetPosition (mySpaceShip.GetPosition ());
+
+		explode = GameObject.Find ("explode");
 	}
 
 	// Game状態の開始関数
@@ -368,7 +367,6 @@ public class Game : MonoBehaviour {
 		if (Input.GetKeyDown (KeyCode.Space) && mySpaceShip.GetFuelRemaining() > 0) {
 			Physics2D.gravity=new Vector3(0.0f, 0.0f, 0.0f);
 			mySpaceShip.SetVelocity(new Vector3 (0.0f, 0.0f, 0.0f));
-			mySpaceShip.Test();
 		}
 		
 		// Spaceで噴射
@@ -389,12 +387,16 @@ public class Game : MonoBehaviour {
 		}
 
 		// 重力と落下速度を調節する
-		if (Input.GetKeyUp (KeyCode.Space) && mySpaceShip.GetFuelRemaining() > 0) {
+		if (Input.GetKeyUp (KeyCode.Space) && mySpaceShip.GetPercentFuelRemaining() > 0) {
 			Physics2D.gravity=new Vector3(0.0f, GRAVITYMOON, 0.0f);
 
 			mySpaceShip.SetVelocity(new Vector3 (0.0f, 0.0f, 0.0f));
 		}
-		mySpaceShip.Landing();
+
+		// 燃料がなくなった時に重力によって落下させる
+		if (mySpaceShip.GetPercentFuelRemaining () <= 0) {
+			Physics2D.gravity=new Vector3(0.0f, GRAVITYMOON, 0.0f);
+		}
 
 		// ステータスのテキスト更新
 		fuelRemainingText.text = "残りの燃料："+mySpaceShip.GetPercentFuelRemaining()+"%";
@@ -436,6 +438,17 @@ public class Game : MonoBehaviour {
 		return (int)score;
 	}
 
+	// 爆発の位置をセットする関数
+	public void SetExplodePos(Vector2 pos){
+		explode.transform.localPosition = new Vector3(pos.x,pos.y,0);
+	}
+
+	// 描画の順番を変更する関数
+	public void SetSortingOrder(GameObject gameObject, int num){
+		Renderer renderer = gameObject.GetComponent<Renderer> ();
+		renderer.sortingOrder = num;
+	}
+	
 	// 壁や床にぶつかった時に呼び出される
 	void OnTriggerEnter2D (Collider2D c){
 		// チェックポイントブロックを通過したかの判定を行う
@@ -447,6 +460,15 @@ public class Game : MonoBehaviour {
 		// ステージ(壁や地面)にぶつかった場合
 		if (c.gameObject.tag == "Stage") {
 			gameEndText.text = "GAMEOVER\npush Enter";
+
+			// 宇宙船と炎を裏側にセットする
+			SetSortingOrder (mySpaceShip.GetGameObject (), 0);
+			SetSortingOrder (fire.GetGameObject (), 0);
+			
+			// 爆発を宇宙船のあった場所にセット
+			SetExplodePos (mySpaceShip.GetPosition ());
+			// 爆発が見えるように前に描画
+			SetSortingOrder (explode, 3);
 		}
 
 		// 着地ポイントに着地した場合、着地成功かの判定を行う
@@ -458,16 +480,24 @@ public class Game : MonoBehaviour {
 			}
 			else{
 				gameEndText.text = "GAMEOVER\npush Enter";
+
+				// 宇宙船と炎を裏側にセットする
+				SetSortingOrder (mySpaceShip.GetGameObject (), 0);
+				SetSortingOrder (fire.GetGameObject (), 0);
+				
+				// 爆発を宇宙船のあった場所にセット
+				SetExplodePos (mySpaceShip.GetPosition ());
+				// 爆発が見えるように前に描画
+				SetSortingOrder (explode, 3);
 			}
 		}
 
 		// 重力と落下速度を調節する
 		Physics2D.gravity=new Vector3(0.0f, 0.0f, 0.0f);
 		mySpaceShip.SetVelocity(new Vector3 (0.0f, 0.0f, 0.0f));
-		
+
+		// ゲームオーバーに切り替える
 		Transit (eStatus.eGameOver);
-		
-		
 	}
 }
 
