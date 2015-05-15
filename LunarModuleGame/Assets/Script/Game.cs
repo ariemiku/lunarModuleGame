@@ -65,9 +65,11 @@ class Fire{
 // 宇宙船クラス
 class SpaceShip{
 	// 定数
-	public static readonly float MAX_XSPEED = 0.03f;			// 左右移動の最高速度
-	public static readonly float MAX_VELOCITYSPEED = -1.0f;		// 落下の最高速度
-	public static readonly int MAX_FUEL = 500;					// 満タン時の燃料
+	public static readonly float MAX_XSPEED = 0.03f;				// 左右移動の最高速度
+	public static readonly float MAX_VELOCITY = -1.0f;				// 落下の最高速度
+	public static readonly int MAX_FUEL = 500;						// 満タン時の燃料
+	public static readonly int BUENOUTFUEL = 1;						// 消費燃料
+	public static readonly Vector2 INITIALPOSITION = new Vector2(-3.0f,-1.9f);	// 宇宙船の初期位置
 
 	protected Vector2 position;			// 宇宙船の座標
 	protected GameObject mySpaceShip;
@@ -89,16 +91,13 @@ class SpaceShip{
 		// コンポーネントの取得
 		mySpaceShip = GameObject.Find("spaceship");
 
-		Physics2D.gravity=new Vector3(0.0f, -0.3f, 0.0f);
-
 		rigidbody2D = mySpaceShip.GetComponent<Rigidbody2D> ();
-		SetVelocitySpeed (new Vector3 (0.0f, 0.0f, 0.0f));
+		SetVelocity(new Vector3 (0.0f, 0.0f, 0.0f));
 	}
 	
 	public void Initialize(){
 		// 初期位置に宇宙船をセット
-		position.x = -2.0f;
-		position.y = 2.0f;
+		position=INITIALPOSITION;
 		mySpaceShip.transform.localPosition = new Vector3(position.x,position.y,0);
 
 		rotationAngle = 0.0f;
@@ -131,11 +130,10 @@ class SpaceShip{
 		mySpaceShip.transform.rotation = Quaternion.AngleAxis (rotationAngle%360,Vector3.forward);
 	}
 
+	// 宇宙船の傾きを取得する関数
 	public float GetRotation(){
 		return rotationAngle;
 	}
-
-	float frontMoveX=0.0f;
 
 	// ロケット噴射を行う関数
 	public void Jet(){
@@ -148,13 +146,6 @@ class SpaceShip{
 		// 向いている方向へ移動させる
 		pos += mySpaceShip.transform.TransformDirection (Vector3.up) * MAX_XSPEED;
 
-
-		// 前と逆の方向に向かっている場合
-		/*
-		if ((pos.x - mySpaceShip.transform.localPosition.x) * frontMoveX < 0) {
-			Debug.Log("reverse");
-		}*/
-
 		// Xの移動量を記憶しておく
 		moveX = pos.x - mySpaceShip.transform.localPosition.x;
 
@@ -166,7 +157,6 @@ class SpaceShip{
 
 	// テスト関数
 	public void Test(){
-		frontMoveX = moveX;
 	}
 
 	// 慣性の法則に従って動き続けるx座標の処理
@@ -185,24 +175,29 @@ class SpaceShip{
 	}
 	
 	// 落下速度を取得する関数
-	public Vector3 GetVelocitySpeed(){
+	public Vector3 GetVelocity(){
 		rigidbody2D = mySpaceShip.GetComponent<Rigidbody2D> ();
 		return rigidbody2D.velocity;
 	}
+
+	// 着陸時の最高落下速度の絶対値を取得する関数
+	public float GetLandingMaxVelocity(){
+		return (-MAX_VELOCITY)/2;
+	}
 	
 	// 落下速度を設定する関数
-	public void SetVelocitySpeed(Vector3 velocitySpeed){
-		rigidbody2D.velocity = velocitySpeed;
+	public void SetVelocity(Vector3 velocity){
+		rigidbody2D.velocity = velocity;
 	}
 
 	// 落下速度が上限を超えないようにする関数
 	public void SetChangeVelocity(){
 		// 落下速度に上限を設ける
-		Vector3 nowSpeed = GetVelocitySpeed();
+		Vector3 nowSpeed = GetVelocity();
 		
-		if (nowSpeed.y < MAX_VELOCITYSPEED) {
-			nowSpeed.y = MAX_VELOCITYSPEED;
-			SetVelocitySpeed(nowSpeed);
+		if (nowSpeed.y < MAX_VELOCITY) {
+			nowSpeed.y = MAX_VELOCITY;
+			SetVelocity(nowSpeed);
 		}
 	}
 
@@ -219,9 +214,9 @@ class SpaceShip{
 		}
 
 		// 現在の落下速度を取得
-		Vector3 nowSpeed = GetVelocitySpeed();
+		Vector3 nowSpeed = GetVelocity();
 		// 着陸の落下速度が最高落下速度の2分の1よりも早い場合falseを返す
-		if (nowSpeed.y <= (MAX_VELOCITYSPEED/2)){
+		if (nowSpeed.y <= (MAX_VELOCITY/2)){
 			return false;
 		}
 
@@ -235,7 +230,7 @@ class SpaceShip{
 
 	// 燃料を消費する関数
 	public void UseFuel(){
-		fuelRemaining -= 1;
+		fuelRemaining -= BUENOUTFUEL;
 	}
 
 	// 残りの燃料をパーセントで返す関数
@@ -248,11 +243,15 @@ class SpaceShip{
 
 public class Game : MonoBehaviour {
 	// 定数
-	public static readonly float ROTATION_SPEED = 2.0f;		// 回転速度
-	
+	public static readonly float ROTATION_SPEED = 2.0f;				// 回転速度
+	public static readonly float GRAVITYMOON = -0.5f;				// 重力
+	public static readonly float CORRECTIONTOLOOKVEROCITY = -100;	// 速度を表示するにあたって補正する値
+
 	private eStatus m_Status;
 	public Text gameEndText;
 	public Text fuelRemainingText;
+	public Text angleText;
+	public Text landingVelocityText;
 
 	SpaceShip mySpaceShip;
 
@@ -293,6 +292,8 @@ public class Game : MonoBehaviour {
 	// play状態の開始関数
 	void StartPlay(eStatus PrevStatus){
 		// 代わった時に1回しかやらないことをする
+		Physics2D.gravity=new Vector3(0.0f, 0.0f, 0.0f);
+
 		gameEndText = GameObject.Find ("Canvas/TextGameEnd").GetComponent<Text> ();
 		gameEndText.text = "";
 
@@ -301,11 +302,16 @@ public class Game : MonoBehaviour {
 		mySpaceShip.Initialize();
 
 		fuelRemainingText = GameObject.Find ("Canvas/TextFuelRemaining").GetComponent<Text> ();
-		fuelRemainingText.text = "残りの燃料:"+mySpaceShip.GetPercentFuelRemaining();
+		fuelRemainingText.text = "残りの燃料："+mySpaceShip.GetPercentFuelRemaining();
+
+		angleText = GameObject.Find ("Canvas/TextAngle").GetComponent<Text> ();
+		angleText.text = "機体の傾き：" + mySpaceShip.GetRotation ();
+
+		landingVelocityText = GameObject.Find ("Canvas/TextLandingVelocity").GetComponent<Text> ();
+		landingVelocityText.text = "機体の落下速度：" + (mySpaceShip.GetVelocity ().y * CORRECTIONTOLOOKVEROCITY);
 
 		fire = new Fire ();
 		fire.BackSetPosition (mySpaceShip.GetPosition ());
-
 	}
 
 	// Game状態の開始関数
@@ -316,17 +322,6 @@ public class Game : MonoBehaviour {
 	
 	// Play状態の更新関数
 	void UpdatePlay(){
-		// RightShiftキーでゲームオーバーに切り替える（仮）
-		if(Input.GetKeyDown(KeyCode.RightShift))
-		{
-			Transit (eStatus.eGameOver);
-		}
-		
-		// leftShiftでブロックを最初の位置に戻す（仮）
-		if (Input.GetKeyDown (KeyCode.LeftShift)) {
-			mySpaceShip.Initialize();
-		}
-		
 		// RightArrowで宇宙船を右回転させる
 		if (Input.GetKey(KeyCode.RightArrow)) {
 			mySpaceShip.Rotation(-ROTATION_SPEED);
@@ -340,13 +335,14 @@ public class Game : MonoBehaviour {
 		}
 
 		// ロケット噴射時に重力を0に設定する
-		if (Input.GetKeyDown (KeyCode.A) && mySpaceShip.GetFuelRemaining() > 0) {
+		if (Input.GetKeyDown (KeyCode.Space) && mySpaceShip.GetFuelRemaining() > 0) {
 			Physics2D.gravity=new Vector3(0.0f, 0.0f, 0.0f);
+			mySpaceShip.SetVelocity(new Vector3 (0.0f, 0.0f, 0.0f));
 			mySpaceShip.Test();
 		}
 		
-		// Aで噴射
-		if (Input.GetKey (KeyCode.A) && mySpaceShip.GetFuelRemaining() > 0) {
+		// Spaceで噴射
+		if (Input.GetKey (KeyCode.Space) && mySpaceShip.GetFuelRemaining() > 0) {
 			mySpaceShip.Jet ();
 
 			// 炎の傾きをセットする
@@ -363,21 +359,25 @@ public class Game : MonoBehaviour {
 		}
 
 		// 重力と落下速度を調節する
-		if (Input.GetKeyUp (KeyCode.A) && mySpaceShip.GetFuelRemaining() > 0) {
-			Physics2D.gravity=new Vector3(0.0f, -0.3f, 0.0f);
+		if (Input.GetKeyUp (KeyCode.Space) && mySpaceShip.GetFuelRemaining() > 0) {
+			Physics2D.gravity=new Vector3(0.0f, GRAVITYMOON, 0.0f);
 
-			mySpaceShip.SetVelocitySpeed (new Vector3 (0.0f, 0.0f, 0.0f));
+			mySpaceShip.SetVelocity(new Vector3 (0.0f, 0.0f, 0.0f));
 		}
 		mySpaceShip.Landing();
 
 		// 残りの燃料の更新
-		fuelRemainingText.text = "残りの燃料:"+mySpaceShip.GetPercentFuelRemaining()+"%";
+		fuelRemainingText.text = "残りの燃料："+mySpaceShip.GetPercentFuelRemaining()+"%";
+
+		angleText.text = "機体の傾き：" + mySpaceShip.GetRotation ()%360;
+
+		landingVelocityText.text = "機体の落下速度：" + mySpaceShip.GetVelocity ().y * CORRECTIONTOLOOKVEROCITY;
 	}
 	
 	// Game状態の更新関数
 	void UpdateGameover(){
-		// spaceキーでTitleに切り替える
-		if(Input.GetKeyDown(KeyCode.Space))
+		// enterキーでTitleに切り替える
+		if(Input.GetKeyDown(KeyCode.Return))
 		{
 			Application.LoadLevel("Title");
 		}
@@ -386,7 +386,7 @@ public class Game : MonoBehaviour {
 	// スコアの計算
 	int ComputeScore(){
 		// 着陸速度が小さいほど高得点
-		float score = 0.5f + mySpaceShip.GetVelocitySpeed ().y;
+		float score = mySpaceShip.GetLandingMaxVelocity() + mySpaceShip.GetVelocity().y;
 		score = score * 100;
 
 		// 残りの燃料に伴ってボーナス点を加算
@@ -401,7 +401,7 @@ public class Game : MonoBehaviour {
 
 		// ステージ(壁や地面)にぶつかった場合
 		if (c.gameObject.tag == "Stage") {
-			gameEndText.text = "GAMEOVER push space";
+			gameEndText.text = "GAMEOVER push Enter";
 		}
 
 		// 着地ポイントに着地した場合、着地成功かの判定を行う
@@ -409,16 +409,16 @@ public class Game : MonoBehaviour {
 			// 着地が成功した場合
 			if(mySpaceShip.Landing()){
 				// スコアの表示もここで行う
-				gameEndText.text = "GameComplete\nscore:"+ComputeScore()+"\npush space";
+				gameEndText.text = "GameComplete\nscore："+ComputeScore()+"\npush Enter";
 			}
 			else{
-				gameEndText.text = "GAMEOVER push space";
+				gameEndText.text = "GAMEOVER push Enter";
 			}
 		}
 
 		// 重力と落下速度を調節する
 		Physics2D.gravity=new Vector3(0.0f, 0.0f, 0.0f);
-		mySpaceShip.SetVelocitySpeed (new Vector3 (0.0f, 0.0f, 0.0f));
+		mySpaceShip.SetVelocity(new Vector3 (0.0f, 0.0f, 0.0f));
 
 		Transit (eStatus.eGameOver);
 	}
