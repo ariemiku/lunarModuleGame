@@ -5,6 +5,7 @@ using UnityEngine.UI;
 
 // ステータス
 enum eStatus{
+	eTutorial,
 	ePlay,
 	eGameOver,
 };
@@ -105,6 +106,7 @@ class SpaceShip{
 		moveX = 0.0f;
 	}
 
+	// ゲームオブジェクトを取得する
 	public GameObject GetGameObject(){
 		return mySpaceShip;
 	}
@@ -248,24 +250,32 @@ public class Game : MonoBehaviour {
 	public static readonly float CORRECTIONTOLOOKVEROCITY = -100;	// 速度を表示するにあたって補正する値
 
 	private eStatus m_Status;
+
+	// テキスト
+	public Text tutorialText;
 	public Text gameEndText;
 	public Text fuelRemainingText;
 	public Text angleText;
 	public Text landingVelocityText;
+	public Text checkLandingText;
 
 	SpaceShip mySpaceShip;
-
 	Fire fire;
+
+	bool checkPoint;
 	
 	// Use this for initialization
 	void Start () {
-		m_Status = eStatus.ePlay;
+		m_Status = eStatus.eTutorial;
 		Transit (m_Status);
 	}
 	
 	// Update is called once per frame
 	void Update () {
 		switch (m_Status) {
+		case eStatus.eTutorial:
+			UpdateTutorial();
+			break;
 		case eStatus.ePlay:
 			UpdatePlay();
 			break;
@@ -278,6 +288,9 @@ public class Game : MonoBehaviour {
 	// シーンを代える
 	void Transit(eStatus NextStatus){
 		switch (NextStatus) {
+		case eStatus.eTutorial:
+			StartTutorial(m_Status);
+			break;
 		case eStatus.ePlay:
 			StartPlay(m_Status);
 			break;
@@ -287,26 +300,34 @@ public class Game : MonoBehaviour {
 		}
 		m_Status = NextStatus;
 	}
-	
+
+	// tutorial状態の開始関数
+	void StartTutorial(eStatus PrevStatus){
+		// 代わった時に1回しかやらないことをする
+		Physics2D.gravity=new Vector3(0.0f, 0.0f, 0.0f);
+
+		// テキスト
+		gameEndText = GameObject.Find ("Canvas/TextGameEnd").GetComponent<Text> ();
+		gameEndText.text = "";
+		tutorialText = GameObject.Find ("Canvas/TextTutorial").GetComponent<Text> ();
+		checkLandingText = GameObject.Find ("Canvas/TextCheckLanding").GetComponent<Text> ();
+		checkLandingText.text = "";
+	}
 	
 	// play状態の開始関数
 	void StartPlay(eStatus PrevStatus){
 		// 代わった時に1回しかやらないことをする
-		Physics2D.gravity=new Vector3(0.0f, 0.0f, 0.0f);
-
-		gameEndText = GameObject.Find ("Canvas/TextGameEnd").GetComponent<Text> ();
-		gameEndText.text = "";
+		checkPoint = false;
 
 		// 宇宙船の初期位置設定
 		mySpaceShip = new SpaceShip ();
 		mySpaceShip.Initialize();
 
+		// テキスト
 		fuelRemainingText = GameObject.Find ("Canvas/TextFuelRemaining").GetComponent<Text> ();
 		fuelRemainingText.text = "残りの燃料："+mySpaceShip.GetPercentFuelRemaining();
-
 		angleText = GameObject.Find ("Canvas/TextAngle").GetComponent<Text> ();
 		angleText.text = "機体の傾き：" + mySpaceShip.GetRotation ();
-
 		landingVelocityText = GameObject.Find ("Canvas/TextLandingVelocity").GetComponent<Text> ();
 		landingVelocityText.text = "機体の落下速度：" + (mySpaceShip.GetVelocity ().y * CORRECTIONTOLOOKVEROCITY);
 
@@ -317,9 +338,18 @@ public class Game : MonoBehaviour {
 	// Game状態の開始関数
 	void StartGameover(eStatus PrevStatus){
 		// 代わった時に1回しかやらないことをする
-
 	}
-	
+
+	// tutorial状態の更新関数
+	void UpdateTutorial(){
+		// enterキーでゲームをスタートさせる
+		if (Input.GetKeyDown (KeyCode.Return)) {
+			// 操作説明のテキストを削除する
+			Destroy(tutorialText);
+			Transit (eStatus.ePlay);
+		}
+	}
+
 	// Play状態の更新関数
 	void UpdatePlay(){
 		// RightArrowで宇宙船を右回転させる
@@ -366,12 +396,22 @@ public class Game : MonoBehaviour {
 		}
 		mySpaceShip.Landing();
 
-		// 残りの燃料の更新
+		// ステータスのテキスト更新
 		fuelRemainingText.text = "残りの燃料："+mySpaceShip.GetPercentFuelRemaining()+"%";
-
 		angleText.text = "機体の傾き：" + mySpaceShip.GetRotation ()%360;
-
 		landingVelocityText.text = "機体の落下速度：" + mySpaceShip.GetVelocity ().y * CORRECTIONTOLOOKVEROCITY;
+		// チェックポイントを過ぎたかつ着陸条件を満たしている場合着陸可能かテキストを出す
+		// どちらも満たしていない場合表記しない
+		if (!checkPoint) {
+			checkLandingText.text = "";
+		}
+		else if (mySpaceShip.Landing ()) {
+			checkLandingText.text = "着陸可能";
+		}
+		else {
+			checkLandingText.text = "着陸不可";
+		}
+	
 	}
 	
 	// Game状態の更新関数
@@ -398,10 +438,15 @@ public class Game : MonoBehaviour {
 
 	// 壁や床にぶつかった時に呼び出される
 	void OnTriggerEnter2D (Collider2D c){
+		// チェックポイントブロックを通過したかの判定を行う
+		if (c.gameObject.tag == "CheckPoint") {
+			checkPoint = true;
+			return;
+		}
 
 		// ステージ(壁や地面)にぶつかった場合
 		if (c.gameObject.tag == "Stage") {
-			gameEndText.text = "GAMEOVER push Enter";
+			gameEndText.text = "GAMEOVER\npush Enter";
 		}
 
 		// 着地ポイントに着地した場合、着地成功かの判定を行う
@@ -412,15 +457,17 @@ public class Game : MonoBehaviour {
 				gameEndText.text = "GameComplete\nscore："+ComputeScore()+"\npush Enter";
 			}
 			else{
-				gameEndText.text = "GAMEOVER push Enter";
+				gameEndText.text = "GAMEOVER\npush Enter";
 			}
 		}
 
 		// 重力と落下速度を調節する
 		Physics2D.gravity=new Vector3(0.0f, 0.0f, 0.0f);
 		mySpaceShip.SetVelocity(new Vector3 (0.0f, 0.0f, 0.0f));
-
+		
 		Transit (eStatus.eGameOver);
+		
+		
 	}
 }
 
