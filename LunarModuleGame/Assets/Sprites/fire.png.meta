@@ -1,6 +1,6 @@
 fileFormatVersion: 2
 guid: 1d9b2566ecb59f84393c21da5f6294d0
-timeCreated: 1431579431
+timeCreated: 1431662329
 licenseType: Free
 TextureImporter:
   fileIDToRecycleName:
@@ -56,19 +56,19 @@ TextureImporter:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 9
+        width: 13
         height: 20
-      alignment: 5
+      alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
     - name: fire_1
       rect:
         serializedVersion: 2
-        x: 9
+        x: 13
         y: 0
-        width: 9
+        width: 13
         height: 20
-      alignment: 5
+      alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
   spritePackingTag: 
