@@ -9,6 +9,60 @@ enum eStatus{
 	eGameOver,
 };
 
+class Fire{
+	public static readonly float DIFFERENCE_POSX = 0.05f;	// 宇宙船のX座標との差
+	public static readonly float DIFFERENCE_POSY = -0.31f;	// 宇宙船のY座標との差
+
+	protected GameObject fire;
+	protected Vector2 position;
+	protected float rotationAngle;		// 回転角度
+
+	// コンストラクタ
+	public Fire(){
+		fire = GameObject.Find ("fire");
+		position = new Vector2 (0.0f, 0.0f);
+		rotationAngle = 0.0f;
+	}
+
+	// 宇宙船の裏側に位置をセットする関数
+	public void BackSetPosition(Vector2 spaceShipPos){
+		position.x = spaceShipPos.x;
+		position.y = spaceShipPos.y;
+		
+		fire.transform.localPosition = new Vector3(position.x,position.y,0);
+	}
+
+	// 炎の位置をセットする関数
+	public void SetPosition(Vector2 pos){
+		fire.transform.localPosition = new Vector3(pos.x,pos.y,0);
+	}
+
+	// 炎の角度をセットする関数
+	public void SetRotationAngle(float rotationA){
+		rotationAngle = rotationA;
+		fire.transform.rotation = Quaternion.AngleAxis (rotationAngle%360,Vector3.forward);
+	}
+
+	// テストを行う関数
+	public void Test(){
+
+	}
+
+	// 炎の位置を宇宙船の下に設定する関数
+	public void SetFireUnderSpaceShip(GameObject spaceShip,Vector2 centerPos){
+		Vector3 pos;
+		Vector3 centerPosition = new Vector3 (centerPos.x, centerPos.y, 0.0f);
+		
+		// 向いている方向へ移動させる
+		pos = (spaceShip.transform.TransformDirection (Vector3.down) * 0.3f)+centerPosition;
+		
+		pos.z = 0.0f;
+		
+		SetPosition (pos);
+	}
+}
+
+// 宇宙船クラス
 class SpaceShip{
 	// 定数
 	public static readonly float MAX_XSPEED = 0.03f;			// 左右移動の最高速度
@@ -51,7 +105,11 @@ class SpaceShip{
 		mySpaceShip.transform.rotation = Quaternion.AngleAxis (0,Vector3.forward);
 		moveX = 0.0f;
 	}
-	
+
+	public GameObject GetGameObject(){
+		return mySpaceShip;
+	}
+
 	// 宇宙船の位置をセットする関数
 	public void SetPosition(float x, float y){
 		position.x = x;
@@ -71,6 +129,10 @@ class SpaceShip{
 	public void Rotation(float rotationSpeed){
 		rotationAngle = rotationAngle + rotationSpeed;
 		mySpaceShip.transform.rotation = Quaternion.AngleAxis (rotationAngle%360,Vector3.forward);
+	}
+
+	public float GetRotation(){
+		return rotationAngle;
 	}
 
 	float frontMoveX=0.0f;
@@ -117,7 +179,8 @@ class SpaceShip{
 		
 		// ロケット噴射をした時に記憶しておいたXの移動値を加算する
 		pos.x += moveX;
-		
+
+		// 位置を設定する
 		SetPosition (pos.x,pos.y);
 	}
 	
@@ -192,6 +255,8 @@ public class Game : MonoBehaviour {
 	public Text fuelRemainingText;
 
 	SpaceShip mySpaceShip;
+
+	Fire fire;
 	
 	// Use this for initialization
 	void Start () {
@@ -238,6 +303,9 @@ public class Game : MonoBehaviour {
 		fuelRemainingText = GameObject.Find ("Canvas/TextFuelRemaining").GetComponent<Text> ();
 		fuelRemainingText.text = "残りの燃料:"+mySpaceShip.GetPercentFuelRemaining();
 
+		fire = new Fire ();
+		fire.BackSetPosition (mySpaceShip.GetPosition ());
+
 	}
 
 	// Game状態の開始関数
@@ -262,11 +330,13 @@ public class Game : MonoBehaviour {
 		// RightArrowで宇宙船を右回転させる
 		if (Input.GetKey(KeyCode.RightArrow)) {
 			mySpaceShip.Rotation(-ROTATION_SPEED);
+			fire.SetRotationAngle (mySpaceShip.GetRotation ());
 		}
 		
 		// LeftArrowで宇宙船を左回転させる
 		if (Input.GetKey(KeyCode.LeftArrow)) {
 			mySpaceShip.Rotation(ROTATION_SPEED);
+			fire.SetRotationAngle (mySpaceShip.GetRotation ());
 		}
 
 		// ロケット噴射時に重力を0に設定する
@@ -278,17 +348,24 @@ public class Game : MonoBehaviour {
 		// Aで噴射
 		if (Input.GetKey (KeyCode.A) && mySpaceShip.GetFuelRemaining() > 0) {
 			mySpaceShip.Jet ();
+
+			// 炎の傾きをセットする
+			fire.SetRotationAngle (mySpaceShip.GetRotation ());
+			// 炎の位置を宇宙船の下に設定する
+			fire.SetFireUnderSpaceShip (mySpaceShip.GetGameObject(),mySpaceShip.GetPosition());
 		}
 		else {
 			// 慣性の法則に従ってxを移動させる
 			mySpaceShip.MoveXByInertia ();
 			mySpaceShip.SetChangeVelocity();
+
+			fire.BackSetPosition(mySpaceShip.GetPosition ());
 		}
 
 		// 重力と落下速度を調節する
 		if (Input.GetKeyUp (KeyCode.A) && mySpaceShip.GetFuelRemaining() > 0) {
 			Physics2D.gravity=new Vector3(0.0f, -0.3f, 0.0f);
-			//mySpaceShip.Test();
+
 			mySpaceShip.SetVelocitySpeed (new Vector3 (0.0f, 0.0f, 0.0f));
 		}
 		mySpaceShip.Landing();
