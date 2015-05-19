@@ -46,6 +46,9 @@ public class ChangeFontColor : MonoBehaviour {
 		case eTextType.eTextCheckLanding:
 			ChangeColorTextCheckLanding ();
 			break;
+		case eTextType.eTextHorizontalSpeed:
+			ChangeColorTextHorizontalSpeed ();
+			break;
 		}
 
 		// フォントの色を変える.
@@ -93,8 +96,19 @@ public class ChangeFontColor : MonoBehaviour {
 		if (m_game.GetStatus () == eStatus.eGameOver) {
 			return;
 		}
-		float maxVelocity = -m_spaceship.GetLandingMaxVelocity ();
-		if (m_spaceship.GetVelocity ().y <= maxVelocity) {
+		float verticalSpeed = -0.005f;
+		if (-m_spaceship.GetVerticalSpeed () < verticalSpeed) {
+			m_fontColor = eFontColor.eRed;
+		}
+		else {
+			m_fontColor = eFontColor.eGreen;
+		}
+	}
+
+	// 平行速度の色変え.
+	void ChangeColorTextHorizontalSpeed () {
+		float horizontalSpeed = m_spaceship.GetHorizontalSpeed ();
+		if(horizontalSpeed > 0.005 || horizontalSpeed < -0.005) {
 			m_fontColor = eFontColor.eRed;
 		}
 		else {

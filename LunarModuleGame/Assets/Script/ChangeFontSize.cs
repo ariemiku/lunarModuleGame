@@ -17,6 +17,7 @@ public class ChangeFontSize : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 		m_nowScreenSize = new Vector2 (Screen.width, Screen.height);
+		ChengeSize ();
 	}
 
 	// Update is called once per frame
@@ -51,6 +52,9 @@ public class ChangeFontSize : MonoBehaviour {
 			break;
 		case eTextType.eTextTutorial:
 			fontSize = tutorialFontSize;
+			break;
+		case eTextType.eTextHorizontalSpeed:
+			fontSize = parameterFontSize;
 			break;
 		}
 

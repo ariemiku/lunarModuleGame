@@ -9,4 +9,5 @@ public enum eTextType {
 	eTextLandingVelocity,
 	eTextCheckLanding,
 	eTextTutorial,
+	eTextHorizontalSpeed,
 };
