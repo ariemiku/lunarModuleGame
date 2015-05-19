@@ -8,6 +8,8 @@ public enum eStatus{
 	eTutorial,
 	ePlay,
 	eGameOver,
+	eStageClear,
+	eNextStage,
 };
 
 class Fire{
@@ -97,7 +99,7 @@ public class SpaceShip {
 		SetVerticalSpeed (0.0f);
 	}
 	
-	public void Initialize(){
+	public void InitializeStage1(){
 		// 初期位置に宇宙船をセット
 		position=INITIALPOSITION;
 		mySpaceShip.transform.localPosition = new Vector3(position.x,position.y,0);
@@ -106,6 +108,20 @@ public class SpaceShip {
 		mySpaceShip.transform.rotation = Quaternion.AngleAxis (0,Vector3.forward);
 		m_horizontalSpeed = 0;
 		m_verticalSpeed = 0;
+		fuelRemaining = MAX_FUEL;
+	}
+
+	public void InitializeStage2(){
+		// 初期位置に宇宙船をセット
+		position=INITIALPOSITION;
+		mySpaceShip.transform.localPosition = new Vector3(position.x,position.y,0);
+		
+		rotationAngle = 0.0f;
+		mySpaceShip.transform.rotation = Quaternion.AngleAxis (0,Vector3.forward);
+		m_horizontalSpeed = 0;
+		m_verticalSpeed = 0;
+		fuelRemaining = MAX_FUEL;
+
 	}
 
 	// ゲームオブジェクトを取得する関数
@@ -297,6 +313,12 @@ public class Game : MonoBehaviour {
 		case eStatus.eGameOver:
 			UpdateGameover();
 			break;
+		case eStatus.eStageClear:
+			UpdateStageClear ();
+			break;
+		case eStatus.eNextStage:
+			m_Status = eStatus.ePlay;
+			break;
 		}
 	}
 	
@@ -311,6 +333,12 @@ public class Game : MonoBehaviour {
 			break;
 		case eStatus.eGameOver:
 			StartGameover(m_Status);
+			break;
+		case eStatus.eStageClear:
+			StartStageClear ();
+			break;
+		case eStatus.eNextStage:
+			StartNextStage ();
 			break;
 		}
 		m_Status = NextStatus;
@@ -336,7 +364,8 @@ public class Game : MonoBehaviour {
 
 		// 宇宙船の初期位置設定
 		mySpaceShip = new SpaceShip ();
-		mySpaceShip.Initialize();
+		//mySpaceShip.InitializeStage1 ();
+		StageManager.GetInstance ();
 
 		// テキスト
 		fuelRemainingText = GameObject.Find ("Canvas/TextFuelRemaining").GetComponent<GUIText> ();
@@ -360,11 +389,22 @@ public class Game : MonoBehaviour {
 		explode = GameObject.Find ("explode");
 
 		m_start = false;
+		StageManager.GetInstance ().Transit (StageManager.eStage.eStage1);
 	}
 
 	// Game状態の開始関数
 	void StartGameover(eStatus PrevStatus){
 		// 代わった時に1回しかやらないことをする
+	}
+
+	void StartStageClear () {
+
+	}
+
+	void StartNextStage () {
+		StageManager.GetInstance ().SetNextStage ();
+		m_start = false;
+		gameEndText.text = "";
 	}
 
 	// tutorial状態の更新関数
@@ -458,6 +498,13 @@ public class Game : MonoBehaviour {
 		}
 	}
 
+	void UpdateStageClear () {
+		if(Input.GetKeyDown(KeyCode.Return))
+		{
+			Transit (eStatus.eNextStage);
+		}
+	}
+
 	// スコアの計算
 	int ComputeScore(){
 		// 着陸速度が小さいほど高得点
@@ -518,6 +565,9 @@ public class Game : MonoBehaviour {
 			SetExplodePos (mySpaceShip.GetPosition ());
 			// 爆発が見えるように前に描画
 			SetSortingOrder (explode, 3);
+
+			// ゲームオーバーに切り替える
+			Transit (eStatus.eGameOver);
 		}
 
 		// 着地ポイントに着地した場合、着地成功かの判定を行う
@@ -526,6 +576,7 @@ public class Game : MonoBehaviour {
 			if(mySpaceShip.Landing()){
 				// スコアの表示もここで行う
 				gameEndText.text = "GameComplete\nscore："+ComputeScore()+"\npush Enter";
+				Transit (eStatus.eStageClear);
 			}
 			else{
 				gameEndText.text = "GAMEOVER\npush Enter";
@@ -538,15 +589,23 @@ public class Game : MonoBehaviour {
 				SetExplodePos (mySpaceShip.GetPosition ());
 				// 爆発が見えるように前に描画
 				SetSortingOrder (explode, 3);
+
+				// ゲームオーバーに切り替える
+				Transit (eStatus.eGameOver);
 			}
 		}
 
 		// 重力と落下速度を調節する
-		Physics2D.gravity=new Vector3(0.0f, 0.0f, 0.0f);
-		mySpaceShip.SetVerticalSpeed (0.0f);
+		/*Physics2D.gravity=new Vector3(0.0f, 0.0f, 0.0f);
+		mySpaceShip.SetVerticalSpeed (0.0f);*/
+	}
 
-		// ゲームオーバーに切り替える
-		Transit (eStatus.eGameOver);
+	void OnTriggerExit2D (Collider2D c) {
+		// チェックポイントブロックを通過したかの判定を行う
+		if (c.gameObject.tag == "CheckPoint") {
+			checkPoint = false;
+			return;
+		}
 	}
 
 	// スペースシップ取得.
