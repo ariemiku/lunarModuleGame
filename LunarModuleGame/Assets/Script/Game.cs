@@ -150,7 +150,10 @@ public class SpaceShip {
 		// 向いている方向へ移動させる
 
 		// スピード更新.
-		m_horizontalSpeed -= mySpaceShip.transform.up.x * SPEED;
+		if (mySpaceShip.transform.up.x > 8.742278E-08 || 
+		    mySpaceShip.transform.up.x < -8.742278E-08) {
+			m_horizontalSpeed -= mySpaceShip.transform.up.x * SPEED;
+		}
 		m_verticalSpeed -= mySpaceShip.transform.up.y * SPEED;
 		pos.x -= m_horizontalSpeed;
 		pos.y -= m_verticalSpeed;
@@ -343,7 +346,13 @@ public class Game : MonoBehaviour {
 		landingVelocityText = GameObject.Find ("Canvas/TextLandingVelocity").GetComponent<GUIText> ();
 		landingVelocityText.text = "落下速度：" + (mySpaceShip.GetVerticalSpeed () * CORRECTIONTOLOOKVEROCITY);
 		horizontalSpeedText = GameObject.Find ("Canvas/TextHorizontalSpeed").GetComponent<GUIText> ();
-		horizontalSpeedText.text = "水平速度：" + (mySpaceShip.GetHorizontalSpeed () * CORRECTIONTOLOOKVEROCITY);
+		if (mySpaceShip.GetGameObject ().transform.up.x > 8.742278E-08 || 
+		    mySpaceShip.GetGameObject ().transform.up.x < -8.742278E-08) {
+			horizontalSpeedText.text = "水平速度：" + (mySpaceShip.GetHorizontalSpeed () * CORRECTIONTOLOOKVEROCITY);
+		}
+		else {
+			horizontalSpeedText.text = "水平速度：" + 0;
+		}
 
 		fire = new Fire ();
 		fire.BackSetPosition (mySpaceShip.GetPosition ());
@@ -415,7 +424,13 @@ public class Game : MonoBehaviour {
 		fuelRemainingText.text = "残りの燃料："+mySpaceShip.GetPercentFuelRemaining()+"%";
 		angleText.text = "機体の傾き：" + mySpaceShip.GetRotation ()%360;
 		landingVelocityText.text = "落下速度：" + mySpaceShip.GetVerticalSpeed () * CORRECTIONTOLOOKVEROCITY;
-		horizontalSpeedText.text = "水平速度：" + mySpaceShip.GetHorizontalSpeed () * CORRECTIONTOLOOKVEROCITY;
+		if (mySpaceShip.GetGameObject ().transform.up.x > 8.742278E-08 || 
+		    mySpaceShip.GetGameObject ().transform.up.x < -8.742278E-08) {
+			horizontalSpeedText.text = "水平速度：" + (mySpaceShip.GetHorizontalSpeed () * CORRECTIONTOLOOKVEROCITY);
+		}
+		else {
+			horizontalSpeedText.text = "水平速度：" + 0;
+		}
 		// チェックポイントを過ぎたかつ着陸条件を満たしている場合着陸可能かテキストを出す
 		// どちらも満たしていない場合表記しない
 		if (!checkPoint) {
