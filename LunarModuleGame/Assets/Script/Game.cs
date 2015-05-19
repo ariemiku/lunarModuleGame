@@ -4,7 +4,7 @@ using System.Collections;
 using UnityEngine.UI;
 
 // ステータス
-enum eStatus{
+public enum eStatus{
 	eTutorial,
 	ePlay,
 	eGameOver,
@@ -63,7 +63,7 @@ class Fire{
 }
 
 // 宇宙船クラス
-class SpaceShip{
+public class SpaceShip {
 	// 定数
 	public static readonly float MAX_XSPEED = 0.03f;				// 左右移動の最高速度
 	public static readonly float MAX_VELOCITY = -1.0f;				// 落下の最高速度
@@ -200,8 +200,9 @@ class SpaceShip{
 
 	// 着地が成功かどうか判定を行い成功の場合trueを返す関数
 	public bool Landing(){
-		// 機体が水平でない場合falseを返す
-		if (rotationAngle >= 1.0f || rotationAngle <= -1.0f) {
+		// 機体がほぼ水平でない場合falseを返す.
+		if ((rotationAngle > 4.0f && rotationAngle < 356.0f) || 
+		    (rotationAngle < -4.0f && rotationAngle > -356.0f)) {
 			return false;
 		}
 	
@@ -247,12 +248,14 @@ public class Game : MonoBehaviour {
 	private eStatus m_Status;
 
 	// テキスト
-	public Text tutorialText;
-	public Text gameEndText;
-	public Text fuelRemainingText;
-	public Text angleText;
-	public Text landingVelocityText;
-	public Text checkLandingText;
+	public GUIText tutorialText;
+	public GUIText gameEndText;
+	public GUIText fuelRemainingText;
+	public GUIText angleText;
+	public GUIText landingVelocityText;
+	public GUIText checkLandingText;
+
+	public GameObject m_exclamation;
 
 	SpaceShip mySpaceShip;
 	Fire fire;
@@ -304,10 +307,10 @@ public class Game : MonoBehaviour {
 		Physics2D.gravity=new Vector3(0.0f, 0.0f, 0.0f);
 
 		// テキスト
-		gameEndText = GameObject.Find ("Canvas/TextGameEnd").GetComponent<Text> ();
+		gameEndText = GameObject.Find ("Canvas/TextGameEnd").GetComponent<GUIText> ();
 		gameEndText.text = "";
-		tutorialText = GameObject.Find ("Canvas/TextTutorial").GetComponent<Text> ();
-		checkLandingText = GameObject.Find ("Canvas/TextCheckLanding").GetComponent<Text> ();
+		tutorialText = GameObject.Find ("Canvas/TextTutorial").GetComponent<GUIText> ();
+		checkLandingText = GameObject.Find ("Canvas/TextCheckLanding").GetComponent<GUIText> ();
 		checkLandingText.text = "";
 	}
 	
@@ -321,11 +324,11 @@ public class Game : MonoBehaviour {
 		mySpaceShip.Initialize();
 
 		// テキスト
-		fuelRemainingText = GameObject.Find ("Canvas/TextFuelRemaining").GetComponent<Text> ();
+		fuelRemainingText = GameObject.Find ("Canvas/TextFuelRemaining").GetComponent<GUIText> ();
 		fuelRemainingText.text = "残りの燃料："+mySpaceShip.GetPercentFuelRemaining();
-		angleText = GameObject.Find ("Canvas/TextAngle").GetComponent<Text> ();
+		angleText = GameObject.Find ("Canvas/TextAngle").GetComponent<GUIText> ();
 		angleText.text = "機体の傾き：" + mySpaceShip.GetRotation ();
-		landingVelocityText = GameObject.Find ("Canvas/TextLandingVelocity").GetComponent<Text> ();
+		landingVelocityText = GameObject.Find ("Canvas/TextLandingVelocity").GetComponent<GUIText> ();
 		landingVelocityText.text = "機体の落下速度：" + (mySpaceShip.GetVelocity ().y * CORRECTIONTOLOOKVEROCITY);
 
 		fire = new Fire ();
@@ -406,12 +409,16 @@ public class Game : MonoBehaviour {
 		// どちらも満たしていない場合表記しない
 		if (!checkPoint) {
 			checkLandingText.text = "";
+			m_exclamation.transform.position = new Vector2 (100, 100);
 		}
 		else if (mySpaceShip.Landing ()) {
 			checkLandingText.text = "着陸可能";
+			m_exclamation.transform.position = new Vector2 (100, 100);
 		}
 		else {
 			checkLandingText.text = "着陸不可";
+			Vector2 exclamationPosition = mySpaceShip.GetPosition ();
+			m_exclamation.transform.position = new Vector2 (exclamationPosition.x, exclamationPosition.y + 0.5f);
 		}
 	
 	}
@@ -498,6 +505,16 @@ public class Game : MonoBehaviour {
 
 		// ゲームオーバーに切り替える
 		Transit (eStatus.eGameOver);
+	}
+
+	// スペースシップ取得.
+	public SpaceShip GetMySpaceShip () {
+		return mySpaceShip;
+	}
+
+	// ステータスの取得.
+	public eStatus GetStatus () {
+		return m_Status;
 	}
 }
 
