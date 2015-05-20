@@ -254,7 +254,7 @@ public class SpaceShip {
 
 	// 補給.
 	public void Supply () {
-		fuelRemaining += 400;
+		fuelRemaining += 600;
 	}
 }
 
