@@ -13,4 +13,5 @@ public enum eTextType {
 	eTextCourseTime,
 	eTextStageNum,
 	eTextScore,
+	eTextTitle,
 };

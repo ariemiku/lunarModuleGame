@@ -9,6 +9,7 @@ public class ChangeFontSize : MonoBehaviour {
 	const int tutorialFontSize = 24;
 	const int gameEndFontSize = 24;
 	const int courseTimeFontSize = 50;
+	const int titleFontSize = 50;
 
 	public GUIText m_text;
 	public eTextType m_textType;
@@ -65,6 +66,9 @@ public class ChangeFontSize : MonoBehaviour {
 			break;
 		case eTextType.eTextScore:
 			fontSize = parameterFontSize;
+			break;
+		case eTextType.eTextTitle:
+			fontSize = titleFontSize;
 			break;
 		}
 

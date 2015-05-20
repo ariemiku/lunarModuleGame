@@ -5,18 +5,26 @@ public class StageManager : MonoBehaviour {
 	public enum eStage {
 		eStage1,
 		eStage2,
+		eStage3,
+		eStage4,
 	};
+
+	readonly Vector2 stage1InitializePosition = new Vector2 (-3.0f,-1.9f);
+	readonly Vector2 stage2InitializePosition = new Vector2 (-0.1f,-1.5f);
+	readonly Vector2 stage3InitializePosition = new Vector2 (-2.3f,-2.2f);
+	readonly Vector2 stage4InitializePosition = new Vector2 (-2.3f,-2.2f);
 
 	private static StageManager s_instance;
 	eStage m_stage;
 
-	public SpaceShip m_spaceShip;
-	public GameObject m_stage1;
-	public GameObject m_stage2;
+	Game m_game;
+	SpaceShip m_spaceShip;
+	GameObject m_stage1;
+	GameObject m_stage2;
 
 	void Awake () {
-		Game game = GameObject.Find ("spaceship").GetComponent<Game> ();
-		m_spaceShip = game.GetMySpaceShip ();
+		m_game = GameObject.Find ("spaceship").GetComponent<Game> ();
+		m_spaceShip = m_game.GetMySpaceShip ();
 		m_stage1 = GameObject.Find ("lunarSurface1");
 		m_stage2 = GameObject.Find ("lunarSurface2");
 	}
@@ -32,6 +40,10 @@ public class StageManager : MonoBehaviour {
 		case eStage.eStage1:
 			break;
 		case eStage.eStage2:
+			break;
+		case eStage.eStage3:
+			break;
+		case eStage.eStage4:
 			break;
 		}
 	}
@@ -49,11 +61,15 @@ public class StageManager : MonoBehaviour {
 		switch (nextStage) {
 		case eStage.eStage1:
 			StartStage1 ();
-			m_spaceShip.InitializeStage1 ();
 			break;
 		case eStage.eStage2:
 			StartStage2 ();
-			m_spaceShip.InitializeStage2 ();
+			break;
+		case eStage.eStage3:
+			StartStage3 ();
+			break;
+		case eStage.eStage4:
+			StartStage4 ();
 			break;
 		}
 		m_stage = nextStage;
@@ -62,11 +78,29 @@ public class StageManager : MonoBehaviour {
 	void StartStage1 () {
 		m_stage1.transform.position = new Vector2 (0, 0);
 		m_stage2.transform.position = new Vector2 (100, 100);
+		m_game.SetFuel (new Vector2 (0.2f, 0));
+		m_spaceShip.Initialize ();
+		m_spaceShip.SetPosition (stage1InitializePosition);
 	}
 
 	void StartStage2 () {
+		m_game.SetFuel (new Vector2 (-3, 2));
+		m_spaceShip.Initialize ();
+		m_spaceShip.SetPosition (stage2InitializePosition);
+	}
+
+	void StartStage3 () {
 		m_stage2.transform.position = new Vector2 (0, 0);
 		m_stage1.transform.position = new Vector2 (100, 100);
+		m_game.SetFuel (new Vector2 (-3, 2));
+		m_spaceShip.Initialize ();
+		m_spaceShip.SetPosition (stage3InitializePosition);
+	}
+
+	void StartStage4 () {
+		m_game.SetFuel (new Vector2 (-0.06f, 0.14f));
+		m_spaceShip.Initialize ();
+		m_spaceShip.SetPosition (stage4InitializePosition);
 	}
 
 	public void SetNextStage () {
@@ -75,6 +109,9 @@ public class StageManager : MonoBehaviour {
 			Transit (eStage.eStage2);
 			break;
 		case eStage.eStage2:
+			Transit (eStage.eStage3);
+			break;
+		case eStage.eStage3:
 			Transit (eStage.eStage1);
 			break;
 		}

@@ -29,6 +29,10 @@ public class ChangeFontColor : MonoBehaviour {
 	// フォントの色変え.
 	void ChangeColor () {
 		if (m_spaceship == null) {
+
+			if(m_game == null) {
+				return;
+			}
 			m_spaceship = m_game.GetMySpaceShip ();
 			return;
 		}
@@ -50,13 +54,7 @@ public class ChangeFontColor : MonoBehaviour {
 		case eTextType.eTextHorizontalSpeed:
 			ChangeColorTextHorizontalSpeed ();
 			break;
-		case eTextType.eTextCourseTime:
-			m_fontColor = eFontColor.eWhite;
-			break;
-		case eTextType.eTextStageNum:
-			m_fontColor = eFontColor.eWhite;
-			break;
-		case eTextType.eTextScore:
+		default:
 			m_fontColor = eFontColor.eWhite;
 			break;
 		}

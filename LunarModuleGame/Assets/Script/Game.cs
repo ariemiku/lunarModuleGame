@@ -99,29 +99,16 @@ public class SpaceShip {
 		SetVerticalSpeed (0.0f);
 	}
 	
-	public void InitializeStage1(){
+	public void Initialize(){
 		// 初期位置に宇宙船をセット
-		position=INITIALPOSITION;
-		mySpaceShip.transform.localPosition = new Vector3(position.x,position.y,0);
+		//position=INITIALPOSITION;
+		//mySpaceShip.transform.localPosition = new Vector3(position.x,position.y,0);
 
 		rotationAngle = 0.0f;
 		mySpaceShip.transform.rotation = Quaternion.AngleAxis (0,Vector3.forward);
 		m_horizontalSpeed = 0;
 		m_verticalSpeed = 0;
 		fuelRemaining = MAX_FUEL;
-	}
-
-	public void InitializeStage2(){
-		// 初期位置に宇宙船をセット
-		position=INITIALPOSITION;
-		mySpaceShip.transform.localPosition = new Vector3(position.x,position.y,0);
-		
-		rotationAngle = 0.0f;
-		mySpaceShip.transform.rotation = Quaternion.AngleAxis (0,Vector3.forward);
-		m_horizontalSpeed = 0;
-		m_verticalSpeed = 0;
-		fuelRemaining = MAX_FUEL;
-
 	}
 
 	// ゲームオブジェクトを取得する関数
@@ -130,9 +117,9 @@ public class SpaceShip {
 	}
 
 	// 宇宙船の位置をセットする関数
-	public void SetPosition(float x, float y){
-		position.x = x;
-		position.y = y;
+	public void SetPosition(Vector2 pos){
+		position.x = pos.x;
+		position.y = pos.y;
 		
 		mySpaceShip.transform.localPosition = new Vector3(position.x,position.y,0);
 	}
@@ -157,11 +144,10 @@ public class SpaceShip {
 
 	// ロケット噴射を行う関数
 	public void Jet(){
-		Vector3 pos;
+		Vector2 pos;
 		// 現在の位置を取得
 		pos.x = mySpaceShip.transform.localPosition.x;
 		pos.y = mySpaceShip.transform.localPosition.y;
-		pos.z = 0.0f;
 		
 		// 向いている方向へ移動させる
 
@@ -174,7 +160,7 @@ public class SpaceShip {
 		pos.x -= m_horizontalSpeed;
 		pos.y -= m_verticalSpeed;
 
-		SetPosition (pos.x,pos.y);
+		SetPosition (pos);
 
 		// 燃料を消費する
 		UseFuel ();
@@ -182,18 +168,17 @@ public class SpaceShip {
 
 	// 慣性の法則に従って動き続けるx座標の処理
 	public void MoveXByInertia(){
-		Vector3 pos;
+		Vector2 pos;
 		// 現在の位置を取得
 		pos.x = mySpaceShip.transform.localPosition.x;
 		pos.y = mySpaceShip.transform.localPosition.y;
-		pos.z = 0.0f;
 
 		// 移動.
 		pos.x -= m_horizontalSpeed;
 		pos.y -= m_verticalSpeed;
 
 		// 位置を設定する
-		SetPosition (pos.x,pos.y);
+		SetPosition (pos);
 	}
 	
 	// 落下速度を取得する関数
@@ -266,6 +251,11 @@ public class SpaceShip {
 	public float GetRotationAngle () {
 		return rotationAngle;
 	}
+
+	// 補給.
+	public void Supply () {
+		fuelRemaining += 400;
+	}
 }
 
 public class Game : MonoBehaviour {
@@ -290,6 +280,8 @@ public class Game : MonoBehaviour {
 
 	public GameObject m_exclamation;
 
+	public GameObject m_fuel1;
+
 	SpaceShip mySpaceShip;
 	Fire fire;
 
@@ -301,6 +293,7 @@ public class Game : MonoBehaviour {
 	float m_courseTime;
 	int m_stageNum;
 	float m_score;
+	int m_setFuelCount;
 	
 	// Use this for initialization
 	void Start () {
@@ -400,6 +393,8 @@ public class Game : MonoBehaviour {
 		scoreNumText = GameObject.Find ("Canvas/TextScore").GetComponent<GUIText> ();
 		scoreNumText.text = "スコア：" + m_score;
 
+		m_fuel1 = GameObject.Find ("Fuel/Fuel1");
+
 		fire = new Fire ();
 		fire.BackSetPosition (mySpaceShip.GetPosition ());
 
@@ -409,6 +404,7 @@ public class Game : MonoBehaviour {
 		m_courseTime = 0;
 		m_stageNum = 1;
 		m_score = 0;
+		m_setFuelCount = 0;
 		StageManager.GetInstance ().Transit (StageManager.eStage.eStage1);
 	}
 
@@ -421,12 +417,14 @@ public class Game : MonoBehaviour {
 
 	}
 
+	// 次のステージの準備.
 	void StartNextStage () {
 		StageManager.GetInstance ().SetNextStage ();
 		m_start = false;
 		gameEndText.text = "";
 		m_courseTime = 0;
 		m_stageNum++;
+		m_setFuelCount = 0;
 	}
 
 	// tutorial状態の更新関数
@@ -590,6 +588,11 @@ public class Game : MonoBehaviour {
 			return;
 		}
 
+		if (c.gameObject.tag == "Fuel") {
+			mySpaceShip.Supply ();
+			c.gameObject.transform.position = new Vector2 (100, 100);
+		}
+
 		// ステージ(壁や地面)にぶつかった場合
 		if (c.gameObject.tag == "Stage") {
 			gameEndText.text = "GAMEOVER\nYoreScore\n\nStage：" + m_stageNum + "\nScore：" + m_score + "\n\npush Enter";
@@ -611,6 +614,7 @@ public class Game : MonoBehaviour {
 		if(c.gameObject.tag == "LandPoint") {
 			// 着地が成功した場合
 			if(mySpaceShip.Landing()){
+				fire.GetGameObject ().transform.position = new Vector2 (100, 100);
 				// スコアの表示もここで行う
 				ComputeScore ();
 				gameEndText.text = "GameComplete\nscore："+ m_score +"\npush Enter";
@@ -655,6 +659,15 @@ public class Game : MonoBehaviour {
 	public eStatus GetStatus () {
 		return m_Status;
 	}
+
+	// 燃料の設置.
+	public void SetFuel (Vector2 position) {
+		switch (m_setFuelCount) {
+		case 0:
+			m_fuel1.transform.position = position;
+			break;
+		}
+	} 
 }
 
 
