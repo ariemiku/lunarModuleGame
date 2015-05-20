@@ -10,4 +10,7 @@ public enum eTextType {
 	eTextCheckLanding,
 	eTextTutorial,
 	eTextHorizontalSpeed,
+	eTextCourseTime,
+	eTextStageNum,
+	eTextScore,
 };

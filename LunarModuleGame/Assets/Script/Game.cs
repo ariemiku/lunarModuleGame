@@ -284,6 +284,9 @@ public class Game : MonoBehaviour {
 	public GUIText landingVelocityText;
 	public GUIText checkLandingText;
 	public GUIText horizontalSpeedText;
+	public GUIText courseTimeText;
+	public GUIText stageNumText;
+	public GUIText scoreNumText;
 
 	public GameObject m_exclamation;
 
@@ -294,6 +297,10 @@ public class Game : MonoBehaviour {
 
 	bool checkPoint;
 	bool m_start;
+
+	float m_courseTime;
+	int m_stageNum;
+	float m_score;
 	
 	// Use this for initialization
 	void Start () {
@@ -375,13 +382,23 @@ public class Game : MonoBehaviour {
 		landingVelocityText = GameObject.Find ("Canvas/TextLandingVelocity").GetComponent<GUIText> ();
 		landingVelocityText.text = "落下速度：" + (mySpaceShip.GetVerticalSpeed () * CORRECTIONTOLOOKVEROCITY);
 		horizontalSpeedText = GameObject.Find ("Canvas/TextHorizontalSpeed").GetComponent<GUIText> ();
-		if (mySpaceShip.GetGameObject ().transform.up.x > 8.742278E-08 || 
-		    mySpaceShip.GetGameObject ().transform.up.x < -8.742278E-08) {
+		if ((mySpaceShip.GetGameObject ().transform.up.x != 8.742278E-08 || 
+		     mySpaceShip.GetGameObject ().transform.up.x != -8.742278E-08) && 
+		    mySpaceShip.GetHorizontalSpeed () != 0) {
 			horizontalSpeedText.text = "水平速度：" + (mySpaceShip.GetHorizontalSpeed () * CORRECTIONTOLOOKVEROCITY);
 		}
 		else {
 			horizontalSpeedText.text = "水平速度：" + 0;
 		}
+		int minute = (int)(m_courseTime / 60);
+		int second1 = (int)(m_courseTime % 60 % 10);
+		int second2 = (int)(m_courseTime % 60 / 10);
+		courseTimeText = GameObject.Find ("Canvas/TextCourseTime").GetComponent<GUIText> ();
+		courseTimeText.text = minute + "：" + second2 + second1;
+		stageNumText = GameObject.Find ("Canvas/TextStageNum").GetComponent<GUIText> ();
+		stageNumText.text = "ステージ：" + m_stageNum;
+		scoreNumText = GameObject.Find ("Canvas/TextScore").GetComponent<GUIText> ();
+		scoreNumText.text = "スコア：" + m_score;
 
 		fire = new Fire ();
 		fire.BackSetPosition (mySpaceShip.GetPosition ());
@@ -389,6 +406,9 @@ public class Game : MonoBehaviour {
 		explode = GameObject.Find ("explode");
 
 		m_start = false;
+		m_courseTime = 0;
+		m_stageNum = 1;
+		m_score = 0;
 		StageManager.GetInstance ().Transit (StageManager.eStage.eStage1);
 	}
 
@@ -405,6 +425,8 @@ public class Game : MonoBehaviour {
 		StageManager.GetInstance ().SetNextStage ();
 		m_start = false;
 		gameEndText.text = "";
+		m_courseTime = 0;
+		m_stageNum++;
 	}
 
 	// tutorial状態の更新関数
@@ -451,6 +473,7 @@ public class Game : MonoBehaviour {
 		}
 
 		if (m_start) {
+			m_courseTime += Time.deltaTime;
 			float verticalSpeed = mySpaceShip.GetVerticalSpeed () + 0.0001f;
 			mySpaceShip.SetVerticalSpeed (verticalSpeed);
 		}
@@ -464,13 +487,21 @@ public class Game : MonoBehaviour {
 		fuelRemainingText.text = "残りの燃料："+mySpaceShip.GetPercentFuelRemaining()+"%";
 		angleText.text = "機体の傾き：" + mySpaceShip.GetRotation ()%360;
 		landingVelocityText.text = "落下速度：" + mySpaceShip.GetVerticalSpeed () * CORRECTIONTOLOOKVEROCITY;
-		if (mySpaceShip.GetGameObject ().transform.up.x > 8.742278E-08 || 
-		    mySpaceShip.GetGameObject ().transform.up.x < -8.742278E-08) {
+		if ((mySpaceShip.GetGameObject ().transform.up.x != 8.742278E-08 || 
+		    mySpaceShip.GetGameObject ().transform.up.x != -8.742278E-08) && 
+		    mySpaceShip.GetHorizontalSpeed () != 0) {
 			horizontalSpeedText.text = "水平速度：" + (mySpaceShip.GetHorizontalSpeed () * CORRECTIONTOLOOKVEROCITY);
 		}
 		else {
-			horizontalSpeedText.text = "水平速度：" + 0;
+ 			horizontalSpeedText.text = "水平速度：" + 0;
 		}
+		int minute = (int)(m_courseTime / 60);
+		int second1 = (int)(m_courseTime % 60 % 10);
+		int second2 = (int)(m_courseTime % 60 / 10);
+		courseTimeText.text = minute + "：" + second2 + second1;
+		stageNumText.text = "ステージ：" + m_stageNum;
+		scoreNumText.text = "スコア：" + m_score;
+
 		// チェックポイントを過ぎたかつ着陸条件を満たしている場合着陸可能かテキストを出す
 		// どちらも満たしていない場合表記しない
 		if (!checkPoint) {
@@ -506,7 +537,7 @@ public class Game : MonoBehaviour {
 	}
 
 	// スコアの計算
-	int ComputeScore(){
+	void ComputeScore(){
 		// 着陸速度が小さいほど高得点
 		// 水平スピードボーナス.
 		int horizontalSpeedBonus = (int)(mySpaceShip.GetHorizontalSpeed () * 10000);
@@ -525,13 +556,19 @@ public class Game : MonoBehaviour {
 		}
 		tiltBonus = 40 - tiltBonus;
 
-		int score = horizontalSpeedBonus + verticalSpeedBonus + tiltBonus;
+		// スピードボーナス.
+		int speedBonus = 0;
+		if (m_courseTime < 60) {
+			speedBonus = (int)(120 - (m_courseTime * 2));
+		}
+
+		int score = horizontalSpeedBonus + verticalSpeedBonus + tiltBonus + speedBonus;
 
 		// 残りの燃料に伴ってボーナス点を加算
 		int percent = mySpaceShip.GetPercentFuelRemaining ();
 		score += percent;
 
- 		return score;
+		m_score += score;
 	}
 
 	// 爆発の位置をセットする関数
@@ -555,7 +592,7 @@ public class Game : MonoBehaviour {
 
 		// ステージ(壁や地面)にぶつかった場合
 		if (c.gameObject.tag == "Stage") {
-			gameEndText.text = "GAMEOVER\npush Enter";
+			gameEndText.text = "GAMEOVER\nYoreScore\n\nStage：" + m_stageNum + "\nScore：" + m_score + "\n\npush Enter";
 
 			// 宇宙船と炎を裏側にセットする
 			SetSortingOrder (mySpaceShip.GetGameObject (), 0);
@@ -575,11 +612,12 @@ public class Game : MonoBehaviour {
 			// 着地が成功した場合
 			if(mySpaceShip.Landing()){
 				// スコアの表示もここで行う
-				gameEndText.text = "GameComplete\nscore："+ComputeScore()+"\npush Enter";
+				ComputeScore ();
+				gameEndText.text = "GameComplete\nscore："+ m_score +"\npush Enter";
 				Transit (eStatus.eStageClear);
 			}
 			else{
-				gameEndText.text = "GAMEOVER\npush Enter";
+				gameEndText.text = "GAMEOVER\n\nYoreScore\nStage：" + m_stageNum + "\nScore：" + m_score + "\n\npush Enter";
 
 				// 宇宙船と炎を裏側にセットする
 				SetSortingOrder (mySpaceShip.GetGameObject (), 0);

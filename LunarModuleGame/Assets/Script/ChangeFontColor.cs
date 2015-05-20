@@ -7,6 +7,7 @@ public class ChangeFontColor : MonoBehaviour {
 		eGreen,
 		eYellow,
 		eRed,
+		eWhite,
 	};
 
 	public Game m_game;
@@ -49,6 +50,15 @@ public class ChangeFontColor : MonoBehaviour {
 		case eTextType.eTextHorizontalSpeed:
 			ChangeColorTextHorizontalSpeed ();
 			break;
+		case eTextType.eTextCourseTime:
+			m_fontColor = eFontColor.eWhite;
+			break;
+		case eTextType.eTextStageNum:
+			m_fontColor = eFontColor.eWhite;
+			break;
+		case eTextType.eTextScore:
+			m_fontColor = eFontColor.eWhite;
+			break;
 		}
 
 		// フォントの色を変える.
@@ -61,6 +71,9 @@ public class ChangeFontColor : MonoBehaviour {
 			break;
 		case eFontColor.eRed:
 			m_text.color = Color.red;
+			break;
+		case eFontColor.eWhite:
+			m_text.color = Color.white;
 			break;
 		}
 	}
