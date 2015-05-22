@@ -588,11 +588,6 @@ public class Game : MonoBehaviour {
 			mySpaceShip.SetVerticalSpeed (verticalSpeed);
 		}
 
-		// 燃料がなくなった時に重力によって落下させる
-		if (mySpaceShip.GetPercentFuelRemaining () <= 0) {
-			Physics2D.gravity=new Vector3(0.0f, GRAVITYMOON, 0.0f);
-		}
-
 		// ステータスのテキスト更新
 		fuelRemainingText.text = "残りの燃料："+mySpaceShip.GetPercentFuelRemaining()+"%";
 		angleText.text = "機体の傾き：" + mySpaceShip.GetRotation ()%360;
