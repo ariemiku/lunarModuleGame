@@ -10,6 +10,8 @@ public enum eStatus{
 	eGameOver,
 	eStageClear,
 	eNextStage,
+	eNameInput,
+	eRanking,
 };
 
 class Fire{
@@ -277,8 +279,12 @@ public class Game : MonoBehaviour {
 	public GUIText courseTimeText;
 	public GUIText stageNumText;
 	public GUIText scoreNumText;
+	public GUIText rankingText;
+	public GUIText myScoreText;
 
 	public GameObject m_exclamation;
+	public GameObject m_black;
+	public GameObject m_newRecord;
 
 	public GameObject m_fuel1;
 
@@ -289,11 +295,13 @@ public class Game : MonoBehaviour {
 
 	bool checkPoint;
 	bool m_start;
+	bool m_rankIn;
 
 	float m_courseTime;
 	int m_stageNum;
-	float m_score;
+	int m_score;
 	int m_setFuelCount;
+	string m_playerName = "";
 	
 	// Use this for initialization
 	void Start () {
@@ -316,8 +324,14 @@ public class Game : MonoBehaviour {
 		case eStatus.eStageClear:
 			UpdateStageClear ();
 			break;
+		case eStatus.eRanking:
+			UpdateRanking ();
+			break;
 		case eStatus.eNextStage:
 			m_Status = eStatus.ePlay;
+			break;
+		case eStatus.eNameInput:
+			UpdateNameInput ();
 			break;
 		}
 	}
@@ -326,22 +340,34 @@ public class Game : MonoBehaviour {
 	void Transit(eStatus NextStatus){
 		switch (NextStatus) {
 		case eStatus.eTutorial:
+			m_Status = NextStatus;
 			StartTutorial(m_Status);
 			break;
 		case eStatus.ePlay:
+			m_Status = NextStatus;
 			StartPlay(m_Status);
 			break;
 		case eStatus.eGameOver:
+			m_Status = NextStatus;
 			StartGameover(m_Status);
 			break;
 		case eStatus.eStageClear:
+			m_Status = NextStatus;
 			StartStageClear ();
 			break;
+		case eStatus.eRanking:
+			m_Status = NextStatus;
+			StartRanking ();
+			break;
 		case eStatus.eNextStage:
+			m_Status = NextStatus;
 			StartNextStage ();
 			break;
+		case eStatus.eNameInput:
+			m_Status = NextStatus;
+			StartNameInput ();
+			break;
 		}
-		m_Status = NextStatus;
 	}
 
 	// tutorial状態の開始関数
@@ -384,14 +410,17 @@ public class Game : MonoBehaviour {
 			horizontalSpeedText.text = "水平速度：" + 0;
 		}
 		int minute = (int)(m_courseTime / 60);
-		int second1 = (int)(m_courseTime % 60 % 10);
-		int second2 = (int)(m_courseTime % 60 / 10);
+		int second = (int)(m_courseTime % 60);
 		courseTimeText = GameObject.Find ("Canvas/TextCourseTime").GetComponent<GUIText> ();
-		courseTimeText.text = minute + "：" + second2 + second1;
+		courseTimeText.text = minute + "：" + second;
 		stageNumText = GameObject.Find ("Canvas/TextStageNum").GetComponent<GUIText> ();
 		stageNumText.text = "ステージ：" + m_stageNum;
 		scoreNumText = GameObject.Find ("Canvas/TextScore").GetComponent<GUIText> ();
 		scoreNumText.text = "スコア：" + m_score;
+		rankingText = GameObject.Find ("Canvas/TextRanking").GetComponent<GUIText> ();
+		rankingText.text = "";
+		myScoreText = GameObject.Find ("Canvas/TextMyScore").GetComponent<GUIText> ();
+		myScoreText.text = "";
 
 		m_fuel1 = GameObject.Find ("Fuel/Fuel1");
 
@@ -417,11 +446,94 @@ public class Game : MonoBehaviour {
 
 	}
 
+	void StartNameInput () {
+		// 消す.
+		gameEndText.text = "";
+		fuelRemainingText.text = "";
+		angleText.text = "";
+		horizontalSpeedText.text = "";
+		landingVelocityText.text = "";
+		courseTimeText.text = "";
+		stageNumText.text = "";
+		scoreNumText.text = "";
+		m_black.transform.position = new Vector2 (0, 0);
+
+		m_rankIn = false;
+		Ranking.GetInstance ().SetRankingDate ("Score_Ranking");
+
+		if (Ranking.GetInstance ().GetScore () [9] <= m_score) {
+			m_rankIn = true;
+			m_newRecord.transform.position = new Vector2 (0, 0.7f);
+		}
+		else {
+			Transit (eStatus.eRanking);
+		}
+	}
+
+	void StartRanking () {
+		m_newRecord.transform.position = new Vector2 (100, 100);
+		string fileName = "Score_Ranking";
+		m_rankIn = false;
+		Ranking.GetInstance ().WriteRanking (m_score, fileName, m_playerName);
+		int rankingMaxNum = Ranking.GetInstance ().GetRankingMaxNum ();
+		string[] rankingScore = new string[rankingMaxNum];
+		string[] rankingName = new string[rankingMaxNum];
+		for (int i = 0; i < rankingMaxNum; i++) {
+			rankingScore[i] = Ranking.GetInstance ().GetScore ()[i].ToString ();
+			if(int.Parse (rankingScore[i]) < 1000) {
+				rankingScore[i] = "  " + rankingScore[i];
+			}
+			rankingName[i] = Ranking.GetInstance ().GetName ()[i].ToString ();
+		}
+		string[] rankingNum = new string[rankingMaxNum];
+		rankingNum[0] = "　　１位　";
+		rankingNum[1] = "　　２位　";
+		rankingNum[2] = "　　３位　";
+		rankingNum[3] = "　　４位　";
+		rankingNum[4] = "　　５位　";
+		rankingNum[5] = "　　６位　";
+		rankingNum[6] = "　　７位　";
+		rankingNum[7] = "　　８位　";
+		rankingNum[8] = "　　９位　";
+		rankingNum[9] = "　１０位　";
+
+		for (int i = 0; i < rankingMaxNum; i++) {
+			if(m_score == Ranking.GetInstance ().GetScore ()[i]) {
+				myScoreText.text = rankingNum[i] + rankingScore[i] + "　　" + rankingName[i];
+				myScoreText.transform.position = new Vector2 (0.1f, 0.797f - (0.077f * i));
+				myScoreText.color = Color.red;
+				rankingScore[i] = "";
+				rankingName[i] = "";
+				rankingNum[i] = "";
+				break;
+			}
+		}
+
+		rankingText.text =
+			"　　　　　ランキング\n\n" +
+			rankingNum [0] + rankingScore [0] + "点　" + rankingName [0] + "\n" +
+			rankingNum [1] + rankingScore [1] + "点　" + rankingName [1] + "\n" +
+			rankingNum [2] + rankingScore [2] + "点　" + rankingName [2] + "\n" +
+			rankingNum [3] + rankingScore [3] + "点　" + rankingName [3] + "\n" +
+			rankingNum [4] + rankingScore [4] + "点　" + rankingName [4] + "\n" +
+			rankingNum [5] + rankingScore [5] + "点　" + rankingName [5] + "\n" +
+			rankingNum [6] + rankingScore [6] + "点　" + rankingName [6] + "\n" +
+			rankingNum [7] + rankingScore [7] + "点　" + rankingName [7] + "\n" +
+			rankingNum [8] + rankingScore [8] + "点　" + rankingName [8] + "\n" +
+			rankingNum [9] + rankingScore [9] + "点　" + rankingName [9] + "\n";
+	}
+
 	// 次のステージの準備.
 	void StartNextStage () {
+		if (StageManager.GetInstance ().CheckLastStage ()) {
+			Transit (eStatus.eNameInput);
+			return;
+		}
 		StageManager.GetInstance ().SetNextStage ();
 		m_start = false;
 		gameEndText.text = "";
+		rankingText.text = "";
+		myScoreText.text = "";
 		m_courseTime = 0;
 		m_stageNum++;
 		m_setFuelCount = 0;
@@ -523,7 +635,7 @@ public class Game : MonoBehaviour {
 		// enterキーでTitleに切り替える
 		if(Input.GetKeyDown(KeyCode.Return))
 		{
-			Application.LoadLevel("Title");
+			Transit (eStatus.eNameInput);
 		}
 	}
 
@@ -531,6 +643,21 @@ public class Game : MonoBehaviour {
 		if(Input.GetKeyDown(KeyCode.Return))
 		{
 			Transit (eStatus.eNextStage);
+		}
+	}
+
+	void UpdateNameInput () {
+		if(Input.GetKeyDown(KeyCode.Return) && m_playerName != "")
+		{
+			Transit (eStatus.eRanking);
+		}
+	}
+
+	void UpdateRanking () {
+		// enterキーでTitleに切り替える
+		if(Input.GetKeyDown(KeyCode.Return))
+		{
+			Application.LoadLevel("Title");
 		}
 	}
 
@@ -667,7 +794,20 @@ public class Game : MonoBehaviour {
 			m_fuel1.transform.position = position;
 			break;
 		}
-	} 
+	}
+
+	void OnGUI () {
+		if (m_rankIn) {
+			Vector2 screenSize = new Vector2 (Screen.width, Screen.height);
+			float scale = screenSize.x / 800;
+			if(scale > screenSize.y / 600) {
+				scale = screenSize.y / 600;
+			}
+			Rect rect = new Rect ((int)297 * scale, (int)400 * scale, (int)205 * scale, (int)50 * scale);
+			GUI.skin.textField.fontSize = (int)(40 * scale);
+			m_playerName = GUI.TextField (rect, m_playerName, 5);
+		}
+	}
 }
 
 

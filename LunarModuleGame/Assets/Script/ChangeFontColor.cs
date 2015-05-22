@@ -54,6 +54,9 @@ public class ChangeFontColor : MonoBehaviour {
 		case eTextType.eTextHorizontalSpeed:
 			ChangeColorTextHorizontalSpeed ();
 			break;
+		case eTextType.eTextMyScore:
+			m_fontColor = eFontColor.eRed;
+			break;
 		default:
 			m_fontColor = eFontColor.eWhite;
 			break;

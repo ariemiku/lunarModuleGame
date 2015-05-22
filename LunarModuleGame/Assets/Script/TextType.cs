@@ -14,4 +14,6 @@ public enum eTextType {
 	eTextStageNum,
 	eTextScore,
 	eTextTitle,
+	eTextRanking,
+	eTextMyScore,
 };

@@ -22,6 +22,8 @@ public class StageManager : MonoBehaviour {
 	GameObject m_stage1;
 	GameObject m_stage2;
 
+	bool m_lastStage = false;
+
 	void Awake () {
 		m_game = GameObject.Find ("spaceship").GetComponent<Game> ();
 		m_spaceShip = m_game.GetMySpaceShip ();
@@ -50,7 +52,7 @@ public class StageManager : MonoBehaviour {
 
 	public static StageManager GetInstance () {
 		if (s_instance == null) {
-			GameObject gameObject = new GameObject ("gameObject");
+			GameObject gameObject = new GameObject ("StageManager");
 			s_instance = gameObject.AddComponent<StageManager> ();
 		}
 
@@ -101,6 +103,7 @@ public class StageManager : MonoBehaviour {
 		m_game.SetFuel (new Vector2 (-0.06f, 0.14f));
 		m_spaceShip.Initialize ();
 		m_spaceShip.SetPosition (stage4InitializePosition);
+		m_lastStage = true;
 	}
 
 	public void SetNextStage () {
@@ -112,8 +115,14 @@ public class StageManager : MonoBehaviour {
 			Transit (eStage.eStage3);
 			break;
 		case eStage.eStage3:
-			Transit (eStage.eStage1);
+			Transit (eStage.eStage4);
+			break;
+		case eStage.eStage4:
 			break;
 		}
+	}
+
+	public bool CheckLastStage () {
+		return m_lastStage;
 	}
 }
