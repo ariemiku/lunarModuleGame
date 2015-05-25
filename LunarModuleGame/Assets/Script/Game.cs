@@ -135,8 +135,8 @@ public class SpaceShip {
 	
 	// 宇宙船の回転を行う関数
 	public void Rotation(float rotationSpeed){
-		rotationAngle = rotationAngle + rotationSpeed;
-		mySpaceShip.transform.rotation = Quaternion.AngleAxis (rotationAngle%360,Vector3.forward);
+		rotationAngle = (rotationAngle + rotationSpeed) % 360;
+		mySpaceShip.transform.rotation = Quaternion.AngleAxis (rotationAngle,Vector3.forward);
 	}
 
 	// 宇宙船の傾きを取得する関数
