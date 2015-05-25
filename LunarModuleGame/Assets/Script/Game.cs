@@ -600,10 +600,8 @@ public class Game : MonoBehaviour {
 		else {
  			horizontalSpeedText.text = "水平速度：" + 0;
 		}
-		int minute = (int)(m_courseTime / 60);
-		int second1 = (int)(m_courseTime % 60 % 10);
-		int second2 = (int)(m_courseTime % 60 / 10);
-		courseTimeText.text = minute + "：" + second2 + second1;
+		// 時間 （単位：秒）小数第2位まで表示
+		courseTimeText.text = m_courseTime.ToString ("f2");
 		stageNumText.text = "ステージ：" + m_stageNum;
 		scoreNumText.text = "スコア：" + m_score;
 
