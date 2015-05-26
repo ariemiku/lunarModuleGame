@@ -94,7 +94,8 @@ public class ChangeFontColor : MonoBehaviour {
 			return;
 		}
 		float verticalSpeed = -0.005f;
-		if (-m_spaceship.GetVerticalSpeed () < verticalSpeed) {
+		if (-m_spaceship.GetVerticalSpeed () < verticalSpeed ||
+		    -m_spaceship.GetVerticalSpeed () > 0) {
 			m_fontColor = eFontColor.eRed;
 		}
 		else {

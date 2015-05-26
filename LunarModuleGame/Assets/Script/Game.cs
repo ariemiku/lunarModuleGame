@@ -502,30 +502,45 @@ public class Game : MonoBehaviour {
 		rankingNum[8] = "　　９位　";
 		rankingNum[9] = "　１０位　";
 
+		string[] rankingPoint = new string[rankingMaxNum];
+		rankingPoint[0] = "点　";
+		rankingPoint[1] = "点　";
+		rankingPoint[2] = "点　";
+		rankingPoint[3] = "点　";
+		rankingPoint[4] = "点　";
+		rankingPoint[5] = "点　";
+		rankingPoint[6] = "点　";
+		rankingPoint[7] = "点　";
+		rankingPoint[8] = "点　";
+		rankingPoint[9] = "点　";
+
+		// ランクインした自分の順位を赤色で表示
 		for (int i = 0; i < rankingMaxNum; i++) {
 			if(m_score == Ranking.GetInstance ().GetScore ()[i]) {
-				myScoreText.text = rankingNum[i] + rankingScore[i] + "　　" + rankingName[i];
+				myScoreText.text = rankingNum[i] + rankingScore[i] + "点　" + rankingName[i];
 				myScoreText.transform.position = new Vector2 (0.1f, 0.797f - (0.077f * i));
 				myScoreText.color = Color.red;
 				rankingScore[i] = "";
+				rankingPoint[i] = "";
 				rankingName[i] = "";
 				rankingNum[i] = "";
 				break;
 			}
 		}
 
+		// ランキングを表示
 		rankingText.text =
 			"　　　　　ランキング\n\n" +
-			rankingNum [0] + rankingScore [0] + "点　" + rankingName [0] + "\n" +
-			rankingNum [1] + rankingScore [1] + "点　" + rankingName [1] + "\n" +
-			rankingNum [2] + rankingScore [2] + "点　" + rankingName [2] + "\n" +
-			rankingNum [3] + rankingScore [3] + "点　" + rankingName [3] + "\n" +
-			rankingNum [4] + rankingScore [4] + "点　" + rankingName [4] + "\n" +
-			rankingNum [5] + rankingScore [5] + "点　" + rankingName [5] + "\n" +
-			rankingNum [6] + rankingScore [6] + "点　" + rankingName [6] + "\n" +
-			rankingNum [7] + rankingScore [7] + "点　" + rankingName [7] + "\n" +
-			rankingNum [8] + rankingScore [8] + "点　" + rankingName [8] + "\n" +
-			rankingNum [9] + rankingScore [9] + "点　" + rankingName [9] + "\n";
+			rankingNum [0] + rankingScore [0] + rankingPoint[0] + rankingName [0] + "\n" +
+			rankingNum [1] + rankingScore [1] + rankingPoint[1] + rankingName [1] + "\n" +
+			rankingNum [2] + rankingScore [2] + rankingPoint[2] + rankingName [2] + "\n" +
+			rankingNum [3] + rankingScore [3] + rankingPoint[3] + rankingName [3] + "\n" +
+			rankingNum [4] + rankingScore [4] + rankingPoint[4] + rankingName [4] + "\n" +
+			rankingNum [5] + rankingScore [5] + rankingPoint[5] + rankingName [5] + "\n" +
+			rankingNum [6] + rankingScore [6] + rankingPoint[6] + rankingName [6] + "\n" +
+			rankingNum [7] + rankingScore [7] + rankingPoint[7] + rankingName [7] + "\n" +
+			rankingNum [8] + rankingScore [8] + rankingPoint[8] + rankingName [8] + "\n" +
+			rankingNum [9] + rankingScore [9] + rankingPoint[9] + rankingName [9] + "\n";
 	}
 
 	// 次のステージの準備.
@@ -619,8 +634,7 @@ public class Game : MonoBehaviour {
 		stageNumText.text = "ステージ：" + m_stageNum;
 		scoreNumText.text = "スコア：" + m_score;
 
-		// チェックポイントを過ぎたかつ着陸条件を満たしている場合着陸可能かテキストを出す
-		// どちらも満たしていない場合表記しない
+		// チェックポイントを過ぎた場合 着陸条件を1つでも満たせていなければ"!"を頭上に出す
 		if (!checkPoint) {
 			m_exclamation.transform.position = new Vector2 (100, 100);
 		}
@@ -728,6 +742,7 @@ public class Game : MonoBehaviour {
 			return;
 		}
 
+		// 燃料を取得した場合
 		if (c.gameObject.tag == "Fuel") {
 			mySpaceShip.Supply ();
 			c.gameObject.transform.position = new Vector2 (100, 100);
