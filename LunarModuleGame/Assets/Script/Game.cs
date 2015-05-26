@@ -403,7 +403,7 @@ public class Game : MonoBehaviour {
 		checkLandingText = GameObject.Find ("Canvas/TextCheckLanding").GetComponent<GUIText> ();
 		checkLandingText.text = "";
 	}
-	
+
 	// play状態の開始関数
 	void StartPlay(eStatus PrevStatus){
 		// 代わった時に1回しかやらないことをする
@@ -439,10 +439,9 @@ public class Game : MonoBehaviour {
 		else {
 			horizontalSpeedText.text = "水平速度：" + 0;
 		}
-		int minute = (int)(m_courseTime / 60);
-		int second = (int)(m_courseTime % 60);
+		// 時間 （単位：秒）小数第2位まで表示
 		courseTimeText = GameObject.Find ("Canvas/TextCourseTime").GetComponent<GUIText> ();
-		courseTimeText.text = minute + "：" + second;
+		courseTimeText.text = m_courseTime.ToString ("f2");
 		stageNumText = GameObject.Find ("Canvas/TextStageNum").GetComponent<GUIText> ();
 		stageNumText.text = "ステージ：" + m_stageNum;
 		scoreNumText = GameObject.Find ("Canvas/TextScore").GetComponent<GUIText> ();
@@ -568,8 +567,11 @@ public class Game : MonoBehaviour {
 		m_stageNum++;
 		m_setFuelCount = 0;
 
+		// カーソルを100％の位置に戻す
 		m_cursorPos = new Vector2(3.006f,-2.59f);
 		m_cursor.transform.position = m_cursorPos;
+		// 100％以上のゲージを暗くしておく
+		SetSortingOrder (m_gaugeOver,4);
 	}
 
 	// tutorial状態の更新関数
@@ -753,7 +755,7 @@ public class Game : MonoBehaviour {
 
 
 			// 暗転させているゲージを削除（仮）
-			Destroy(m_gaugeOver);
+			SetSortingOrder(m_gaugeOver,0);
 			m_cursorPos.x = 1.525f + mySpaceShip.GetPercentFuelRemaining()*0.01481f;
 			m_cursor.transform.position = m_cursorPos;
 
