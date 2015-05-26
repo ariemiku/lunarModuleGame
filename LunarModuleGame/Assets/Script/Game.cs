@@ -88,7 +88,6 @@ public class SpaceShip {
 		position.x = 0;
 		position.y = 0;
 		rotationAngle = 0;
-		//moveX = 0.0f;
 		m_horizontalSpeed = 0;
 		m_verticalSpeed = 0;
 		fuelRemaining = MAX_FUEL;
@@ -96,16 +95,11 @@ public class SpaceShip {
 		// コンポーネントの取得
 		mySpaceShip = GameObject.Find("spaceship");
 
-		//rigidbody2D = mySpaceShip.GetComponent<Rigidbody2D> ();
 		SetVerticalSpeed(0.0f);
 		SetVerticalSpeed (0.0f);
 	}
 	
 	public void Initialize(){
-		// 初期位置に宇宙船をセット
-		//position=INITIALPOSITION;
-		//mySpaceShip.transform.localPosition = new Vector3(position.x,position.y,0);
-
 		rotationAngle = 0.0f;
 		mySpaceShip.transform.rotation = Quaternion.AngleAxis (0,Vector3.forward);
 		m_horizontalSpeed = 0;
@@ -151,8 +145,6 @@ public class SpaceShip {
 		pos.x = mySpaceShip.transform.localPosition.x;
 		pos.y = mySpaceShip.transform.localPosition.y;
 		
-		// 向いている方向へ移動させる
-
 		// スピード更新.
 		if (mySpaceShip.transform.up.x > 8.742278E-08 || 
 		    mySpaceShip.transform.up.x < -8.742278E-08) {
@@ -260,35 +252,22 @@ public class SpaceShip {
 	}
 }
 
-public class Gauge{
-	public GameObject m_gauge;
-	public GameObject m_cursor;
-	public GameObject m_gaugeOver;
-
-	Vector2 position;
-
-	public void Initialize(){
-		m_gauge = GameObject.Find ("gauge");
-		m_cursor = GameObject.Find ("cursor");
-		m_gaugeOver = GameObject.Find ("gauge_over");
-	}
-}
-
 public class Game : MonoBehaviour {
 	// 定数
 	public static readonly float ROTATION_SPEED = 2.0f;				// 回転速度
 	public static readonly float GRAVITYMOON = -0.5f;				// 重力
 	public static readonly float CORRECTIONTOLOOKVEROCITY = -10000;	// 速度を表示するにあたって補正する値
+	public static readonly float CURSOR_Y_DIFFERENCE = 0.2f;		// 燃料ゲージカーソルのy座標の差
+	public static readonly float CURSORSTICK_MINPOS_X = 1.525f;		// 0%の時のカーソルのx座標
+	public static readonly Vector2 CURSORSTICK_INITIALPOS = new Vector2 (3.006f,-2.59f);	// カーソルの初期位置（100％）
 
 	private eStatus m_Status;
 
 	// テキスト
 	public GUIText tutorialText;
 	public GUIText gameEndText;
-	public GUIText fuelRemainingText;
 	public GUIText angleText;
 	public GUIText landingVelocityText;
-	public GUIText checkLandingText;
 	public GUIText horizontalSpeedText;
 	public GUIText courseTimeText;
 	public GUIText stageNumText;
@@ -302,13 +281,13 @@ public class Game : MonoBehaviour {
 
 	public GameObject m_fuel1;
 
-
+	// 燃料ゲージ
 	public GameObject m_gauge;
-	public GameObject m_cursor;
 	public GameObject m_gaugeOver;
+	public GameObject m_cursorStick;
+	public GameObject m_cursor;
 	public Vector2 m_cursorPos;
-
-
+	
 	SpaceShip mySpaceShip;
 	Fire fire;
 
@@ -400,8 +379,6 @@ public class Game : MonoBehaviour {
 		gameEndText = GameObject.Find ("Canvas/TextGameEnd").GetComponent<GUIText> ();
 		gameEndText.text = "";
 		tutorialText = GameObject.Find ("Canvas/TextTutorial").GetComponent<GUIText> ();
-		checkLandingText = GameObject.Find ("Canvas/TextCheckLanding").GetComponent<GUIText> ();
-		checkLandingText.text = "";
 	}
 
 	// play状態の開始関数
@@ -411,21 +388,20 @@ public class Game : MonoBehaviour {
 
 		// 宇宙船の初期位置設定
 		mySpaceShip = new SpaceShip ();
-		//mySpaceShip.InitializeStage1 ();
 		StageManager.GetInstance ();
 
+		// 燃料ゲージの初期設定
 		m_gauge = GameObject.Find ("gauge");
-		m_cursor = GameObject.Find ("cursor");
+		m_gauge.transform.position = new Vector3 (2.7f,-2.687f);
 		m_gaugeOver = GameObject.Find ("gauge_over");
-
-		m_gauge.transform.position = new Vector3 (2.7f,-2.61f);
-		m_gaugeOver.transform.position = new Vector3 (3.44f,-2.634f);
-		m_cursorPos = new Vector2(3.006f,-2.59f);
-		m_cursor.transform.position = m_cursorPos;
+		m_gaugeOver.transform.position = new Vector3 (3.443f,-2.634f);
+		m_cursorStick = GameObject.Find ("cursorStick");
+		m_cursorPos = CURSORSTICK_INITIALPOS;
+		m_cursorStick.transform.position = m_cursorPos;
+		m_cursor = GameObject.Find ("cursor");
+		m_cursor.transform.position = new Vector2(m_cursorPos.x,m_cursorPos.y+CURSOR_Y_DIFFERENCE);
 
 		// テキスト
-		fuelRemainingText = GameObject.Find ("Canvas/TextFuelRemaining").GetComponent<GUIText> ();
-		fuelRemainingText.text = "残りの燃料："+mySpaceShip.GetPercentFuelRemaining();
 		angleText = GameObject.Find ("Canvas/TextAngle").GetComponent<GUIText> ();
 		angleText.text = "機体の傾き：" + mySpaceShip.GetRotation ();
 		landingVelocityText = GameObject.Find ("Canvas/TextLandingVelocity").GetComponent<GUIText> ();
@@ -442,6 +418,7 @@ public class Game : MonoBehaviour {
 		// 時間 （単位：秒）小数第2位まで表示
 		courseTimeText = GameObject.Find ("Canvas/TextCourseTime").GetComponent<GUIText> ();
 		courseTimeText.text = m_courseTime.ToString ("f2");
+
 		stageNumText = GameObject.Find ("Canvas/TextStageNum").GetComponent<GUIText> ();
 		stageNumText.text = "ステージ：" + m_stageNum;
 		scoreNumText = GameObject.Find ("Canvas/TextScore").GetComponent<GUIText> ();
@@ -478,7 +455,6 @@ public class Game : MonoBehaviour {
 	void StartNameInput () {
 		// 消す.
 		gameEndText.text = "";
-		fuelRemainingText.text = "";
 		angleText.text = "";
 		horizontalSpeedText.text = "";
 		landingVelocityText.text = "";
@@ -568,8 +544,9 @@ public class Game : MonoBehaviour {
 		m_setFuelCount = 0;
 
 		// カーソルを100％の位置に戻す
-		m_cursorPos = new Vector2(3.006f,-2.59f);
-		m_cursor.transform.position = m_cursorPos;
+		m_cursorPos = CURSORSTICK_INITIALPOS;
+		m_cursorStick.transform.position = m_cursorPos;
+		m_cursor.transform.position = new Vector2(m_cursorPos.x,m_cursorPos.y+CURSOR_Y_DIFFERENCE);
 		// 100％以上のゲージを暗くしておく
 		SetSortingOrder (m_gaugeOver,4);
 	}
@@ -607,11 +584,8 @@ public class Game : MonoBehaviour {
 			// 炎の位置を宇宙船の下に設定する
 			fire.SetFireUnderSpaceShip (mySpaceShip.GetGameObject(),mySpaceShip.GetPosition());
 
-			// 
-			if(mySpaceShip.GetPercentFuelRemaining()%1==0){
-				m_cursorPos.x -=0.001481f;
-				m_cursor.transform.position=m_cursorPos;
-			}
+			// 残りの燃料に合わせたカーソルの移動をする
+			MoveCursor();
 
 			m_start = true;
 		}
@@ -630,7 +604,6 @@ public class Game : MonoBehaviour {
 		}
 
 		// ステータスのテキスト更新
-		fuelRemainingText.text = "残りの燃料："+mySpaceShip.GetPercentFuelRemaining()+"%";
 		angleText.text = "機体の傾き：" + mySpaceShip.GetRotation ()%360;
 		landingVelocityText.text = "落下速度：" + mySpaceShip.GetVerticalSpeed () * CORRECTIONTOLOOKVEROCITY;
 		if ((mySpaceShip.GetGameObject ().transform.up.x != 8.742278E-08 || 
@@ -649,15 +622,12 @@ public class Game : MonoBehaviour {
 		// チェックポイントを過ぎたかつ着陸条件を満たしている場合着陸可能かテキストを出す
 		// どちらも満たしていない場合表記しない
 		if (!checkPoint) {
-			checkLandingText.text = "";
 			m_exclamation.transform.position = new Vector2 (100, 100);
 		}
 		else if (mySpaceShip.Landing ()) {
-			checkLandingText.text = "着陸可能";
 			m_exclamation.transform.position = new Vector2 (100, 100);
 		}
 		else {
-			checkLandingText.text = "着陸不可";
 			Vector2 exclamationPosition = mySpaceShip.GetPosition ();
 			m_exclamation.transform.position = new Vector2 (exclamationPosition.x, exclamationPosition.y + 0.5f);
 		}
@@ -740,7 +710,16 @@ public class Game : MonoBehaviour {
 		Renderer renderer = gameObject.GetComponent<Renderer> ();
 		renderer.sortingOrder = num;
 	}
-	
+
+	// 残りの燃料に合わせたカーソルの移動をする関数
+	void MoveCursor(){
+		if(mySpaceShip.GetPercentFuelRemaining()%1==0 && m_cursorPos.x > CURSORSTICK_MINPOS_X){
+			m_cursorPos.x -= (CURSORSTICK_INITIALPOS.x - CURSORSTICK_MINPOS_X)/1000;
+			m_cursorStick.transform.position=m_cursorPos;
+			m_cursor.transform.position = new Vector2(m_cursorPos.x,m_cursorPos.y+CURSOR_Y_DIFFERENCE);
+		}
+	}
+
 	// 壁や床にぶつかった時に呼び出される
 	void OnTriggerEnter2D (Collider2D c){
 		// チェックポイントブロックを通過したかの判定を行う
@@ -754,10 +733,15 @@ public class Game : MonoBehaviour {
 			c.gameObject.transform.position = new Vector2 (100, 100);
 
 
-			// 暗転させているゲージを削除（仮）
-			SetSortingOrder(m_gaugeOver,0);
-			m_cursorPos.x = 1.525f + mySpaceShip.GetPercentFuelRemaining()*0.01481f;
-			m_cursor.transform.position = m_cursorPos;
+			// 100%を超えた場合のみ暗転させているゲージを裏へ
+			if(mySpaceShip.GetPercentFuelRemaining() > 100){
+				SetSortingOrder(m_gaugeOver,0);
+			}
+			// カーソルの位置を計算しなおす
+			m_cursorPos.x = CURSORSTICK_MINPOS_X + mySpaceShip.GetPercentFuelRemaining()*
+				((CURSORSTICK_INITIALPOS.x - CURSORSTICK_MINPOS_X)/100);
+			m_cursorStick.transform.position = m_cursorPos;
+			m_cursor.transform.position = new Vector2(m_cursorPos.x,m_cursorPos.y+CURSOR_Y_DIFFERENCE);
 
 		}
 
@@ -804,10 +788,6 @@ public class Game : MonoBehaviour {
 				Transit (eStatus.eGameOver);
 			}
 		}
-
-		// 重力と落下速度を調節する
-		/*Physics2D.gravity=new Vector3(0.0f, 0.0f, 0.0f);
-		mySpaceShip.SetVerticalSpeed (0.0f);*/
 	}
 
 	void OnTriggerExit2D (Collider2D c) {

@@ -41,9 +41,6 @@ public class ChangeFontSize : MonoBehaviour {
 		case eTextType.eTextGameEnd:
 			fontSize = gameEndFontSize;
 			break;
-		case eTextType.eTextFuelRemaining:
-			fontSize = parameterFontSize;
-			break;
 		case eTextType.eTextAngle:
 			fontSize = parameterFontSize;
 			break;

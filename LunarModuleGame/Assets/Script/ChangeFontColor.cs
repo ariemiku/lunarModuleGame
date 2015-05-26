@@ -39,9 +39,6 @@ public class ChangeFontColor : MonoBehaviour {
 
 		// テキストの種類の現状によって色を決める.
 		switch (m_textType) {
-		case eTextType.eTextFuelRemaining:
-			ChangeColorTextFuelRemaining ();
-			break;
 		case eTextType.eTextAngle:
 			ChangeColorTextAngle ();
 			break;
@@ -78,21 +75,7 @@ public class ChangeFontColor : MonoBehaviour {
 			break;
 		}
 	}
-
-	// 燃料の色変え.
-	void ChangeColorTextFuelRemaining () {
-		int percentFuelRemaining = m_spaceship.GetPercentFuelRemaining ();
-		if (percentFuelRemaining > 50) {
-			m_fontColor = eFontColor.eGreen;
-		}
-		else if (percentFuelRemaining > 10) {
-			m_fontColor = eFontColor.eYellow;
-		}
-		else {
-			m_fontColor = eFontColor.eRed;
-		}
-	}
-
+	
 	// 角度の色変え.
 	void ChangeColorTextAngle () {
 		int rotation = (int)m_spaceship.GetRotation ();
