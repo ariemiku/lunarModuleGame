@@ -260,6 +260,20 @@ public class SpaceShip {
 	}
 }
 
+public class Gauge{
+	public GameObject m_gauge;
+	public GameObject m_cursor;
+	public GameObject m_gaugeOver;
+
+	Vector2 position;
+
+	public void Initialize(){
+		m_gauge = GameObject.Find ("gauge");
+		m_cursor = GameObject.Find ("cursor");
+		m_gaugeOver = GameObject.Find ("gauge_over");
+	}
+}
+
 public class Game : MonoBehaviour {
 	// 定数
 	public static readonly float ROTATION_SPEED = 2.0f;				// 回転速度
@@ -287,6 +301,13 @@ public class Game : MonoBehaviour {
 	public GameObject m_newRecord;
 
 	public GameObject m_fuel1;
+
+
+	public GameObject m_gauge;
+	public GameObject m_cursor;
+	public GameObject m_gaugeOver;
+	public Vector2 m_cursorPos;
+
 
 	SpaceShip mySpaceShip;
 	Fire fire;
@@ -392,6 +413,15 @@ public class Game : MonoBehaviour {
 		mySpaceShip = new SpaceShip ();
 		//mySpaceShip.InitializeStage1 ();
 		StageManager.GetInstance ();
+
+		m_gauge = GameObject.Find ("gauge");
+		m_cursor = GameObject.Find ("cursor");
+		m_gaugeOver = GameObject.Find ("gauge_over");
+
+		m_gauge.transform.position = new Vector3 (2.7f,-2.61f);
+		m_gaugeOver.transform.position = new Vector3 (3.44f,-2.634f);
+		m_cursorPos = new Vector2(3.006f,-2.59f);
+		m_cursor.transform.position = m_cursorPos;
 
 		// テキスト
 		fuelRemainingText = GameObject.Find ("Canvas/TextFuelRemaining").GetComponent<GUIText> ();
@@ -537,6 +567,9 @@ public class Game : MonoBehaviour {
 		m_courseTime = 0;
 		m_stageNum++;
 		m_setFuelCount = 0;
+
+		m_cursorPos = new Vector2(3.006f,-2.59f);
+		m_cursor.transform.position = m_cursorPos;
 	}
 
 	// tutorial状態の更新関数
@@ -571,6 +604,12 @@ public class Game : MonoBehaviour {
 			fire.SetRotationAngle (mySpaceShip.GetRotation ());
 			// 炎の位置を宇宙船の下に設定する
 			fire.SetFireUnderSpaceShip (mySpaceShip.GetGameObject(),mySpaceShip.GetPosition());
+
+			// 
+			if(mySpaceShip.GetPercentFuelRemaining()%1==0){
+				m_cursorPos.x -=0.001481f;
+				m_cursor.transform.position=m_cursorPos;
+			}
 
 			m_start = true;
 		}
@@ -711,6 +750,13 @@ public class Game : MonoBehaviour {
 		if (c.gameObject.tag == "Fuel") {
 			mySpaceShip.Supply ();
 			c.gameObject.transform.position = new Vector2 (100, 100);
+
+
+			// 暗転させているゲージを削除（仮）
+			Destroy(m_gaugeOver);
+			m_cursorPos.x = 1.525f + mySpaceShip.GetPercentFuelRemaining()*0.01481f;
+			m_cursor.transform.position = m_cursorPos;
+
 		}
 
 		// ステージ(壁や地面)にぶつかった場合
