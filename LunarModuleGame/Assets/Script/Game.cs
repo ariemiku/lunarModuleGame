@@ -161,7 +161,7 @@ public class SpaceShip {
 	}
 
 	// 慣性の法則に従った動きをする関数
-	public void MoveXByInertia(){
+	public void MoveByInertia(){
 		Vector2 pos;
 		// 現在の位置を取得
 		pos.x = mySpaceShip.transform.localPosition.x;
@@ -605,8 +605,8 @@ public class Game : MonoBehaviour {
 			m_start = true;
 		}
 		else {
-			// 慣性の法則に従ってxを移動させる
-			mySpaceShip.MoveXByInertia ();
+			// 慣性の法則に従った動きをさせる
+			mySpaceShip.MoveByInertia ();
 			mySpaceShip.SetChangeVertical();
 
 			fire.BackSetPosition(mySpaceShip.GetPosition ());
