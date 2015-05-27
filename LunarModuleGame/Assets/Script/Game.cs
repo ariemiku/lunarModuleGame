@@ -160,7 +160,7 @@ public class SpaceShip {
 		UseFuel ();
 	}
 
-	// 慣性の法則に従って動き続けるx座標の処理
+	// 慣性の法則に従った動きをする関数
 	public void MoveXByInertia(){
 		Vector2 pos;
 		// 現在の位置を取得
